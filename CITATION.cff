@@ -1,0 +1,32 @@
+# Machine-readable metadata (English). Human-readable guides: CITATION_EN.md / CITATION_CN.md
+cff-version: 1.2.0
+message: "If you use FigTreeKit-MCP in your work, please cite it using the metadata in this file."
+title: "FigTreeKit-MCP: An MCP server for AI-driven FigTreeKit phylogenetic tree styling"
+abstract: >-
+  FigTreeKit-MCP is a Model Context Protocol (MCP) server that exposes the
+  FigTreeKit phylogenetic-tree workflow (validate, analyze, style, export and
+  render) to AI assistants. Styling and export calls return reproducible
+  figtreekit command lines and FigTree configuration blocks, and file access is
+  confined to a writable workspace plus optional read-only roots.
+type: software
+authors:
+  - family-names: Zeng
+    given-names: Zichao
+    email: zengzichao@sjtu.edu.cn
+    orcid: "https://orcid.org/0000-0001-6553-970X"
+    affiliation: "State Key Laboratory of Microbial Metabolism, School of Life Sciences and Biotechnology, Shanghai Jiao Tong University, Shanghai 200240, China"
+date-released: "2026-10-20"
+version: "0.1.0"
+license: GPL-2.0-or-later
+repository-code: "https://github.com/ZengZichao/FigTreeKit-MCP"
+url: "https://github.com/ZengZichao/FigTreeKit-MCP"
+keywords:
+  - MCP
+  - Model Context Protocol
+  - phylogenetics
+  - phylogenetic tree
+  - FigTree
+  - FigTreeKit
+  - Nexus
+  - Newick
+  - reproducible research

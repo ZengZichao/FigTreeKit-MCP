@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "figtreekit": {
+      "command": "/absolute/path/to/python3.11",
+      "args": [
+        "-m",
+        "figtreekit_mcp",
+        "--transport",
+        "stdio",
+        "--workspace-root",
+        "/absolute/path/to/figtreekit-mcp-workspace",
+        "--allow-read-root",
+        "/absolute/path/to/tree-data"
+      ]
+    }
+  }
+}

@@ -1,0 +1,116 @@
+Language: English (canonical) | [简体中文](NOTICE_CN.md)
+
+FigTreeKit-MCP
+Copyright (C) 2026 Zeng Zichao
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+FigTreeKit-MCP is an MCP (Model Context Protocol) server that exposes the
+FigTreeKit phylogenetic-tree workflow (validate, analyze, style, export,
+render) to AI assistants. It delegates all tree computation and rendering to
+the FigTreeKit kernel; this repository does not vendor or modify the FigTree
+Java sources.
+
+==============================================================================
+THIRD-PARTY COMPONENTS
+==============================================================================
+
+1. FigTreeKit
+   ------------
+   FigTreeKit-MCP depends on FigTreeKit as its computation kernel
+   (declared in pyproject.toml as ``figtreekit>=1.1.4,<2``):
+
+     Copyright (C) 2024-2026 Zeng Zichao
+     https://github.com/ZengZichao/FigTreeKit
+
+   FigTreeKit is licensed under the GNU General Public License v2.0 or later
+   (GPL-2.0-or-later).
+
+2. FigTree
+   ---------
+   FigTreeKit is based in part on FigTree v1.4.4:
+
+     Copyright (C) 2006-2014 Andrew Rambaut
+     http://tree.bio.ed.ac.uk/software/figtree/
+     https://github.com/rambaut/figtree
+
+   FigTree is licensed under the GNU General Public License v2.0 or later
+   (GPL-2.0-or-later). The FigTreeKit kernel ships a patched FigTree JAR
+   (``figtreekit/figtree_patched.jar``) rebuilt with source-level
+   modifications; see FigTreeKit's NOTICE for details.
+
+3. iText
+   -------
+   The FigTree JAR files bundled with FigTreeKit include the iText library
+   (com.itextpdf.text.*) for PDF export. iText is licensed under the
+   GNU Affero General Public License v3 (AGPL-3.0). If you redistribute the
+   JAR, review the AGPL-3.0 obligations for iText separately from the
+   GPL-2.0-or-later terms of this project.
+
+4. Biopython
+   -----------
+   FigTreeKit-MCP (via FigTreeKit) uses Biopython for tree/sequence parsing.
+   Biopython is licensed under the BSD-3-Clause license.
+
+5. MCP Python SDK
+   ----------------
+   FigTreeKit-MCP uses the official MCP Python SDK (the ``mcp`` package,
+   including FastMCP, Context, stdio/SSE/Streamable HTTP and the client
+   library used by the test suite):
+
+     https://github.com/modelcontextprotocol/python-sdk
+
+   The MCP Python SDK is licensed under the MIT license.
+
+6. Pillow (optional render extra)
+   -------------------------------
+   The optional ``render`` extra installs Pillow (``pillow>=10.0``) for image
+   dimension inspection and base64 previews in ``render_tree`` and for the
+   pixel-statistics helper in ``tools/equivalence_probe.py``:
+
+     https://python-pillow.org/
+
+   Pillow is licensed under the Historical Permission Notice and Disclaimer
+   (HPND) license.
+
+==============================================================================
+SOURCE CODE
+==============================================================================
+
+The complete source code for FigTreeKit-MCP is available in this repository:
+
+    https://github.com/ZengZichao/FigTreeKit-MCP
+
+For FigTreeKit, see:
+
+    https://github.com/ZengZichao/FigTreeKit
+
+For the original FigTree source code, see:
+
+    https://github.com/rambaut/figtree
+
+==============================================================================
+DOCUMENTATION NOTE
+==============================================================================
+
+This NOTICE is provided for attribution and convenience. The GNU General
+Public License text in ``LICENSE`` is the legally controlling document for
+this project's own code. Third-party components remain governed by their own
+licenses; the descriptions above are summaries, not replacements for those
+licenses.
+
+==============================================================================
+DISCLAIMER
+==============================================================================
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the LICENSE file for the full legal terms.

@@ -20,6 +20,7 @@ Usage (from the repository root)::
 Exit codes: 0 = validation and summary succeeded, 1 = a tool reported an
 error, 2 = usage error / missing input / missing dependency.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -89,14 +90,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--tree",
         default=os.environ.get("FIGTREEKIT_MCP_TREE"),
-        help="Newick/Nexus tree file (default: built-in 12-tip tree; "
-             "env: FIGTREEKIT_MCP_TREE)",
+        help="Newick/Nexus tree file (default: built-in 12-tip tree; env: FIGTREEKIT_MCP_TREE)",
     )
     parser.add_argument(
         "--workspace",
         default=os.environ.get("FIGTREEKIT_MCP_WORKSPACE"),
         help="Writable workspace directory (default: a temporary directory; "
-             "env: FIGTREEKIT_MCP_WORKSPACE)",
+        "env: FIGTREEKIT_MCP_WORKSPACE)",
     )
     return parser
 
@@ -112,11 +112,13 @@ def _resolve_workspace(value: Optional[str]) -> str:
 def _make_ctx(workspace: str, read_roots: List[str]) -> _FakeCtx:
     # ``create_server`` imports and registers all 21 tool handlers, so
     # ``TOOLS`` is complete before we call a handler directly.
-    create_server({
-        "workspace_root": workspace,
-        "read_roots": read_roots,
-        "jar": None,
-    })
+    create_server(
+        {
+            "workspace_root": workspace,
+            "read_roots": read_roots,
+            "jar": None,
+        }
+    )
     app = get_active_app()
     if app is None:  # pragma: no cover - defensive
         raise RuntimeError("create_server() did not install an AppContext")
@@ -129,8 +131,7 @@ def _print_error(prefix: str, exc: ToolError) -> None:
     if exc.error_detail:
         print(f"       {exc.error_detail}", file=sys.stderr)
     for item in exc.details:
-        print(f"       {item.get('level', 'ERROR')}: {item.get('message', '')}",
-              file=sys.stderr)
+        print(f"       {item.get('level', 'ERROR')}: {item.get('message', '')}", file=sys.stderr)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -158,20 +159,21 @@ def main(argv: Optional[List[str]] = None) -> int:
         ctx = _make_ctx(workspace, read_roots)
         validation = TOOLS["validate_tree"](ctx, **target)
         summary = TOOLS["summarize_tree"](
-            ctx, **target, include_tip_labels=True, tip_labels_limit=20,
+            ctx,
+            **target,
+            include_tip_labels=True,
+            tip_labels_limit=20,
         )
     except ToolError as exc:
         _print_error("tool call failed", exc)
         return 1
     except Exception as exc:  # noqa: BLE001 - report, do not traceback
-        print(f"[FAIL] unexpected error: {type(exc).__name__}: {exc}",
-              file=sys.stderr)
+        print(f"[FAIL] unexpected error: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
     print("== validate_tree ==")
     print(
-        "  [PASS] valid={valid} format={fmt} leaf_count={leaves} "
-        "tree_count={trees}".format(
+        "  [PASS] valid={valid} format={fmt} leaf_count={leaves} tree_count={trees}".format(
             valid=validation.get("valid"),
             fmt=validation.get("format"),
             leaves=validation.get("leaf_count"),
@@ -191,21 +193,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         f"  format={summary.get('format')} tree_count={summary.get('tree_count')} "
         f"tips={stats.get('tips')}"
     )
-    print(
-        f"  internal_nodes={stats.get('internal_nodes')} "
-        f"rooted={stats.get('rooted')}"
-    )
+    print(f"  internal_nodes={stats.get('internal_nodes')} rooted={stats.get('rooted')}")
     print(
         "  branch_lengths min={mn} max={mx} negative={neg} has_missing={miss}".format(
-            mn=branch.get("min"), mx=branch.get("max"),
-            neg=branch.get("negative"), miss=branch.get("has_missing"),
+            mn=branch.get("min"),
+            mx=branch.get("max"),
+            neg=branch.get("negative"),
+            miss=branch.get("has_missing"),
         )
     )
     preview = summary.get("tip_labels_preview") or []
-    print(
-        f"  tip_labels_total={summary.get('tip_labels_total')} "
-        f"preview(first 20)={preview}"
-    )
+    print(f"  tip_labels_total={summary.get('tip_labels_total')} preview(first 20)={preview}")
     if summary.get("multi_tree_hint"):
         print(f"  multi_tree_hint: {summary['multi_tree_hint']}")
 

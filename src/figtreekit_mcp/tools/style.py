@@ -37,8 +37,6 @@ from .._logging import get_logger
 from .. import cli_command
 from ..params import ParamSpec
 from . import (
-    TOOLS,
-    export_nexus_file,
     get_app,
     nexus_artifact,
     progress,
@@ -84,20 +82,27 @@ def apply_mcp_styling(styler: FigTreeStyler, spec: ParamSpec) -> None:
     if spec.rooting_type is not None:
         styler.set_trees(
             rooting=True,
-            rooting_type=(RootingType.USER_SELECTION if spec.rooting_type == "user"
-                          else RootingType.MID_POINT),
+            rooting_type=(
+                RootingType.USER_SELECTION if spec.rooting_type == "user" else RootingType.MID_POINT
+            ),
         )
     if spec.transform is not None:
         styler.set_trees(
             transform=True,
-            transform_type=(TransformType.CLADOGRAM if spec.transform == "cladogram"
-                            else TransformType.PHYLOGRAM),
+            transform_type=(
+                TransformType.CLADOGRAM
+                if spec.transform == "cladogram"
+                else TransformType.PHYLOGRAM
+            ),
         )
     if spec.order is not None:
         styler.set_trees(
             order=True,
-            order_type=(OrderType.INCREASING_NODE_DENSITY if spec.order == "increasing"
-                        else OrderType.DECREASING_NODE_DENSITY),
+            order_type=(
+                OrderType.INCREASING_NODE_DENSITY
+                if spec.order == "increasing"
+                else OrderType.DECREASING_NODE_DENSITY
+            ),
         )
 
     # --- tip labels ---
@@ -202,7 +207,9 @@ def _coerce_value(value: Any) -> Any:
 # --------------------------------------------------------------------------- #
 # Ordered clade operations
 # --------------------------------------------------------------------------- #
-def apply_operations(styler: FigTreeStyler, operations: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+def apply_operations(
+    styler: FigTreeStyler, operations: List[Dict[str, Any]]
+) -> List[Dict[str, str]]:
     """Execute ordered clade operations, returning per-op records."""
     records: List[Dict[str, str]] = []
     for i, op in enumerate(operations):
@@ -248,7 +255,9 @@ def apply_operations(styler: FigTreeStyler, operations: List[Dict[str, Any]]) ->
                 styler.clear_clade_hilights()
                 records.append({"op": name, "status": "applied"})
             else:
-                records.append({"op": str(name), "status": "skipped", "reason": f"未知操作（位置 {i}）"})
+                records.append(
+                    {"op": str(name), "status": "skipped", "reason": f"未知操作（位置 {i}）"}
+                )
         except figtreekit.ValidationError as exc:
             records.append(_rec(name, "skipped", group=op.get("group"), reason=str(exc)))
         except Exception as exc:  # noqa: BLE001 - per-op isolation
@@ -261,7 +270,9 @@ def taxa_or_group(op: Dict[str, Any]) -> List[str]:
     return list(taxa) if isinstance(taxa, (list, tuple)) else [str(taxa)]
 
 
-def _rec(op: str, status: str, *, group: Any = None, reason: str = "", taxa_count: int = 0) -> Dict[str, str]:
+def _rec(
+    op: str, status: str, *, group: Any = None, reason: str = "", taxa_count: int = 0
+) -> Dict[str, str]:
     r: Dict[str, str] = {"op": op, "status": status}
     if group:
         r["group"] = str(group)
@@ -276,8 +287,7 @@ def _rec_collapse(op: Dict[str, Any], caught: List[Any]) -> Dict[str, str]:
     compat = [w for w in caught if issubclass(w.category, figtreekit.CompatibilityWarning)]
     if compat:
         return _rec("collapse", "skipped", group=op.get("group"), reason=str(compat[0].message))
-    return _rec("collapse", "applied", group=op.get("group"),
-                taxa_count=len(taxa_or_group(op)))
+    return _rec("collapse", "applied", group=op.get("group"), taxa_count=len(taxa_or_group(op)))
 
 
 def _collapse_group_op(styler: FigTreeStyler, op: Dict[str, Any]) -> Dict[str, str]:
@@ -392,29 +402,41 @@ def _auto_color_and_collapse(
     """
     records: List[Dict[str, str]] = []
     if auto_color_rank is not None:
-        with warnings.catch_warnings(record=True) as caught:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             result = styler.analyze_taxonomy(rank=auto_color_rank, style_monophyletic=False)
         color_groups_by_result(styler, result)
-        records.append({"op": "auto_color", "rank": auto_color_rank, "status": "applied",
-                        "groups": str(len(result.get("monophyletic", {})) + len(result.get("non_monophyletic", {})))})
+        records.append(
+            {
+                "op": "auto_color",
+                "rank": auto_color_rank,
+                "status": "applied",
+                "groups": str(
+                    len(result.get("monophyletic", {})) + len(result.get("non_monophyletic", {}))
+                ),
+            }
+        )
     if collapse_rank is not None:
         # Step 1 (CLI parity): ALWAYS auto-color by phylum before collapsing,
         # independent of any explicit auto_color_rank requested above.  This
         # is the palette context used for post-coloring the collapse nodes.
-        with warnings.catch_warnings(record=True) as caught:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             color_result = styler.analyze_taxonomy(rank="phylum", style_monophyletic=False)
         color_info = color_groups_by_result(styler, color_result)
         # Step 2: collapse at the target rank (never the auto-colour rank).
-        with warnings.catch_warnings(record=True) as caught:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             collapse_result = styler.analyze_taxonomy(rank=collapse_rank, style_monophyletic=False)
         phylum_taxa_sets = {name: list(t) for name, t in color_info.get("group_taxa", {}).items()}
         color_map = color_info.get("color_map", {})
         collapse_records = collapse_monophyletic_groups(
-            styler, collapse_result, collapse_style=collapse_style, strict=False,
-            phylum_taxa_sets=phylum_taxa_sets, color_map=color_map,
+            styler,
+            collapse_result,
+            collapse_style=collapse_style,
+            strict=False,
+            phylum_taxa_sets=phylum_taxa_sets,
+            color_map=color_map,
         )
         records.extend(collapse_records)
     return records
@@ -458,8 +480,10 @@ def _reproducibility_warnings(sr: StyleResult, spec: ParamSpec) -> List[str]:
             "--color-all 是 CLI 全局开关：命令会对所有 --color-clade 生效，"
             "无法同时表达逐条 color 与 color_all。"
         )
-    if any(op.get("op") == "collapse_group" and (op.get("label") or op.get("collapse_type"))
-           for op in ops):
+    if any(
+        op.get("op") == "collapse_group" and (op.get("label") or op.get("collapse_type"))
+        for op in ops
+    ):
         warns.append(
             "collapse_group 的 label/collapse_type 无 CLI --clade 参数可表达，"
             "命令仅复现类群折叠本身。"
@@ -549,31 +573,58 @@ def style_tree(
     """
     app = get_app(ctx)
     spec = ParamSpec(
-        tree_content=tree_content, tree_file=tree_file,
-        taxonomy_levels=taxonomy_levels, taxonomy_mapping_file=taxonomy_mapping_file,
-        table_sep=table_sep, taxonomy_delimiter_mode=taxonomy_delimiter_mode,
-        layout=layout, expansion=expansion, zoom=zoom, rooted=rooted, unrooted=unrooted,
-        rooting_type=rooting_type, transform=transform, order=order,
-        background_color=background_color, foreground_color=foreground_color,
-        selection_color=selection_color, branch_width=branch_width,
+        tree_content=tree_content,
+        tree_file=tree_file,
+        taxonomy_levels=taxonomy_levels,
+        taxonomy_mapping_file=taxonomy_mapping_file,
+        table_sep=table_sep,
+        taxonomy_delimiter_mode=taxonomy_delimiter_mode,
+        layout=layout,
+        expansion=expansion,
+        zoom=zoom,
+        rooted=rooted,
+        unrooted=unrooted,
+        rooting_type=rooting_type,
+        transform=transform,
+        order=order,
+        background_color=background_color,
+        foreground_color=foreground_color,
+        selection_color=selection_color,
+        branch_width=branch_width,
         branch_color_attribute=branch_color_attribute,
-        tip_labels=tip_labels, tip_label_font_name=tip_label_font_name,
-        tip_label_font_size=tip_label_font_size, tip_label_font_style=tip_label_font_style,
-        label_color=label_color, align_tip_labels=align_tip_labels,
-        node_labels=node_labels, node_display_attribute=node_display_attribute,
-        branch_labels=branch_labels, branch_display_attribute=branch_display_attribute,
-        scale_bar=scale_bar, scale_axis=scale_axis, scale_axis_reverse=scale_axis_reverse,
+        tip_labels=tip_labels,
+        tip_label_font_name=tip_label_font_name,
+        tip_label_font_size=tip_label_font_size,
+        tip_label_font_style=tip_label_font_style,
+        label_color=label_color,
+        align_tip_labels=align_tip_labels,
+        node_labels=node_labels,
+        node_display_attribute=node_display_attribute,
+        branch_labels=branch_labels,
+        branch_display_attribute=branch_display_attribute,
+        scale_bar=scale_bar,
+        scale_axis=scale_axis,
+        scale_axis_reverse=scale_axis_reverse,
         scale_axis_font_size=scale_axis_font_size,
         scale_axis_significant_digits=scale_axis_significant_digits,
-        root_age=root_age, scale_factor=scale_factor,
+        root_age=root_age,
+        scale_factor=scale_factor,
         polar_angular_range_degrees=polar_angular_range_degrees,
         polar_root_angle_degrees=polar_root_angle_degrees,
-        radial_spread=radial_spread, curvature=curvature, root_length=root_length,
-        legend=legend, legend_position=legend_position,
-        auto_color_rank=auto_color_rank, collapse_rank=collapse_rank,
+        radial_spread=radial_spread,
+        curvature=curvature,
+        root_length=root_length,
+        legend=legend,
+        legend_position=legend_position,
+        auto_color_rank=auto_color_rank,
+        collapse_rank=collapse_rank,
         collapse_style=collapse_style,
-        operations=operations, additional_config=additional_config,
-        multi_tree=multi_tree, tree_index=tree_index, seed=seed, run_name=run_name,
+        operations=operations,
+        additional_config=additional_config,
+        multi_tree=multi_tree,
+        tree_index=tree_index,
+        seed=seed,
+        run_name=run_name,
     ).validate()
 
     mapping = resolve_mapping_file(app, spec.taxonomy_mapping_file)
@@ -609,12 +660,17 @@ def style_tree(
             progress(ctx, 2, 3, f"执行 {len(collapse_ops)} 条折叠操作")
             records += apply_operations(sr.styler, collapse_ops)
 
-        single_tree = (sr.tree_count > 1
-                       and spec.multi_tree in ("first", "last", "random"))
+        single_tree = sr.tree_count > 1 and spec.multi_tree in ("first", "last", "random")
         base = f"{spec.run_name or 'output'}.nex"
         return _export_with_command(
-            ctx, sr, spec, run_name=spec.run_name, base_name=base,
-            operations_records=records, content=content, node_format=node.format,
+            ctx,
+            sr,
+            spec,
+            run_name=spec.run_name,
+            base_name=base,
+            operations_records=records,
+            content=content,
+            node_format=node.format,
             single_tree=single_tree,
             extra_warnings=_reproducibility_warnings(sr, spec),
         )
@@ -658,16 +714,23 @@ def apply_config(
     """
     app = get_app(ctx)
     if config is not None and not isinstance(config, dict):
-        raise ToolError("invalid_argument", "config 必须是对象（figtree block 键值对）",
-                        error_key="bad_config_type")
+        raise ToolError(
+            "invalid_argument",
+            "config 必须是对象（figtree block 键值对）",
+            error_key="bad_config_type",
+        )
     spec = ParamSpec(
-        auto_color_rank=auto_color_rank, collapse_rank=collapse_rank,
+        auto_color_rank=auto_color_rank,
+        collapse_rank=collapse_rank,
         collapse_style=collapse_style,
         additional_config=config or None,
-        multi_tree=multi_tree, tree_index=tree_index, seed=seed,
+        multi_tree=multi_tree,
+        tree_index=tree_index,
+        seed=seed,
         taxonomy_levels=taxonomy_levels,
         taxonomy_mapping_file=taxonomy_mapping_file,
-        operations=operations, run_name=run_name,
+        operations=operations,
+        run_name=run_name,
     ).validate()
     mapping = resolve_mapping_file(app, spec.taxonomy_mapping_file)
     content, node = resolve_tree_source(tree_content, tree_file, app.workspace)
@@ -688,18 +751,25 @@ def apply_config(
         if annotation_ops:
             records += apply_operations(sr.styler, annotation_ops)
         records += _auto_color_and_collapse(
-            sr.styler, auto_color_rank=spec.auto_color_rank,
-            collapse_rank=spec.collapse_rank, collapse_style=spec.collapse_style,
+            sr.styler,
+            auto_color_rank=spec.auto_color_rank,
+            collapse_rank=spec.collapse_rank,
+            collapse_style=spec.collapse_style,
         )
         if collapse_ops:
             records += apply_operations(sr.styler, collapse_ops)
 
-        single_tree = (sr.tree_count > 1
-                       and spec.multi_tree in ("first", "last", "random"))
+        single_tree = sr.tree_count > 1 and spec.multi_tree in ("first", "last", "random")
         base = f"{spec.run_name or 'output'}.nex"
         return _export_with_command(
-            ctx, sr, spec, run_name=spec.run_name, base_name=base,
-            operations_records=records, content=content, node_format=node.format,
+            ctx,
+            sr,
+            spec,
+            run_name=spec.run_name,
+            base_name=base,
+            operations_records=records,
+            content=content,
+            node_format=node.format,
             single_tree=single_tree,
             extra_warnings=_reproducibility_warnings(sr, spec),
         )
@@ -737,9 +807,7 @@ def export_nexus(
 
     in_path = run.run_dir / "input.tre"
     in_path.write_text(content, encoding="utf-8")
-    cmd = cli_command.build_figtreekit_command(
-        str(in_path), str(out_path), [], force=True
-    )
+    cmd = cli_command.build_figtreekit_command(str(in_path), str(out_path), [], force=True)
     summary = tree_summary(sr.styler)
     summary["format"] = node.format
     return ok_envelope(

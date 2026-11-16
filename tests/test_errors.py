@@ -33,8 +33,13 @@ class TestEnvelope:
         assert env["a"] == 1
 
     def test_error_envelope_shape(self) -> None:
-        env = error_envelope(code="access_denied", error="拒绝", error_key="k",
-                             error_detail="d", details=[{"level": "W", "message": "m"}])
+        env = error_envelope(
+            code="access_denied",
+            error="拒绝",
+            error_key="k",
+            error_detail="d",
+            details=[{"level": "W", "message": "m"}],
+        )
         assert env == {
             "ok": False,
             "code": "access_denied",
@@ -72,8 +77,13 @@ class TestToolError:
 
 class TestExceptionMapping:
     def test_toolerror_passthrough(self) -> None:
-        src = ToolError("monophyly_error", "m", error_key="kk", error_detail="dd",
-                        details=[{"level": "E", "message": "x"}])
+        src = ToolError(
+            "monophyly_error",
+            "m",
+            error_key="kk",
+            error_detail="dd",
+            details=[{"level": "E", "message": "x"}],
+        )
         env = envelope_from_exception(src, run_dir="run_9")
         assert env["code"] == "monophyly_error"
         assert env["error_key"] == "kk"

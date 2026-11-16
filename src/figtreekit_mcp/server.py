@@ -257,9 +257,7 @@ def create_server(
     if "workspace_root" not in cfg:
         from pathlib import Path
 
-        cfg["workspace_root"] = str(
-            Path.cwd() / "figtreekit-mcp-workspace"
-        )
+        cfg["workspace_root"] = str(Path.cwd() / "figtreekit-mcp-workspace")
     _set_active_app(build_app_context(cfg))
 
     mcp = FastMCP(

@@ -9,7 +9,6 @@ public API, and exports a FigTree-compatible Nexus.
 
 from __future__ import annotations
 
-import json
 import re
 import warnings
 from typing import Any, Dict, List, Optional
@@ -24,12 +23,11 @@ from .._core import (
     resolve_tree_source,
     temporary_rank_prefixes,
 )
-from .._errors import ToolError, ok_envelope
+from .._errors import ToolError
 from .._logging import get_logger
 from .. import cli_command
 from ..params import ParamSpec
 from . import (
-    TOOLS,
     get_app,
     nexus_artifact,
     require_run,
@@ -214,8 +212,11 @@ def highlight_clade(
                 error_key="bad_width",
             )
         raw_offset = h.get("offset", 0)
-        if (not isinstance(raw_offset, (int, float)) or isinstance(raw_offset, bool)
-                or float(raw_offset) != int(raw_offset)):
+        if (
+            not isinstance(raw_offset, (int, float))
+            or isinstance(raw_offset, bool)
+            or float(raw_offset) != int(raw_offset)
+        ):
             raise ToolError(
                 "invalid_argument",
                 f"highlights[{i}].offset 必须是整数（CLI 的 --highlight 偏移按 int 解析），"
@@ -225,16 +226,34 @@ def highlight_clade(
         offset = int(raw_offset)
         try:
             styler.highlight_clade(taxa, color=color, width=width, offset=offset)
-            records.append({"op": "highlight", "status": "applied",
-                            "taxa_count": str(len(taxa)), "color": color})
-            ops.append({"op": "highlight", "taxa": taxa, "color": color,
-                        "width": width, "offset": offset})
+            records.append(
+                {
+                    "op": "highlight",
+                    "status": "applied",
+                    "taxa_count": str(len(taxa)),
+                    "color": color,
+                }
+            )
+            ops.append(
+                {"op": "highlight", "taxa": taxa, "color": color, "width": width, "offset": offset}
+            )
         except figtreekit.ValidationError as exc:
-            records.append({"op": "highlight", "status": "skipped",
-                            "reason": str(exc), "taxa_count": str(len(taxa))})
+            records.append(
+                {
+                    "op": "highlight",
+                    "status": "skipped",
+                    "reason": str(exc),
+                    "taxa_count": str(len(taxa)),
+                }
+            )
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops), records=records, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(ops),
+        records=records,
+        run_name=run_name,
         extra={"highlights_applied": sum(1 for r in records if r["status"] == "applied")},
     )
 
@@ -273,14 +292,20 @@ def color_clade(
                 styler.set_clade_color_all(taxa, color)
             else:
                 styler.set_clade_color(taxa, color)
-            records.append({"op": op_name, "status": "applied",
-                            "taxa_count": str(len(taxa)), "color": color})
+            records.append(
+                {"op": op_name, "status": "applied", "taxa_count": str(len(taxa)), "color": color}
+            )
             ops.append({"op": op_name, "taxa": taxa, "color": color})
         except figtreekit.ValidationError as exc:
             records.append({"op": op_name, "status": "skipped", "reason": str(exc)})
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops), records=records, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(ops),
+        records=records,
+        run_name=run_name,
         extra={"colors_applied": sum(1 for r in records if r["status"] == "applied")},
     )
 
@@ -324,13 +349,25 @@ def set_clade_font(
         try:
             styler.set_clade_font(taxa, font_name=fname, font_style=fstyle, font_size=fsize)
             records.append({"op": "font", "status": "applied", "taxa_count": str(len(taxa))})
-            ops.append({"op": "font", "taxa": taxa, "font_name": fname,
-                        "font_style": fstyle, "font_size": fsize})
+            ops.append(
+                {
+                    "op": "font",
+                    "taxa": taxa,
+                    "font_name": fname,
+                    "font_style": fstyle,
+                    "font_size": fsize,
+                }
+            )
         except figtreekit.ValidationError as exc:
             records.append({"op": "font", "status": "skipped", "reason": str(exc)})
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops), records=records, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(ops),
+        records=records,
+        run_name=run_name,
         extra={"fonts_applied": sum(1 for r in records if r["status"] == "applied")},
     )
 
@@ -373,8 +410,9 @@ def collapse_clade(
                 continue
         compat = [w for w in caught if issubclass(w.category, figtreekit.CompatibilityWarning)]
         if compat:
-            records.append({"op": "collapse", "status": "skipped",
-                            "reason": str(compat[0].message)})
+            records.append(
+                {"op": "collapse", "status": "skipped", "reason": str(compat[0].message)}
+            )
             continue
         records.append({"op": "collapse", "status": "applied", "taxa_count": str(len(taxa))})
         spec = {"op": "collapse", "taxa": taxa}
@@ -384,8 +422,13 @@ def collapse_clade(
             spec["collapse_type"] = style
         ops.append(spec)
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops), records=records, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(ops),
+        records=records,
+        run_name=run_name,
         extra={"collapses_applied": sum(1 for r in records if r["status"] == "applied")},
     )
 
@@ -427,8 +470,7 @@ def collapse_group(
     mapping = resolve_mapping_file(app, taxonomy_mapping_file)
 
     with temporary_rank_prefixes(taxonomy_levels):
-        sr = make_styler(content, multi_tree="first",
-                         taxonomy_mapping_file=mapping)
+        sr = make_styler(content, multi_tree="first", taxonomy_mapping_file=mapping)
         styler = sr.styler
         for i, g in enumerate(groups or []):
             grp = g.get("group") if isinstance(g, dict) else None
@@ -453,8 +495,9 @@ def collapse_group(
                         error_key="collapse_group_failed",
                         error_detail=str(exc),
                     ) from exc
-                records.append({"op": "collapse_group", "group": grp,
-                                "status": "skipped", "reason": str(exc)})
+                records.append(
+                    {"op": "collapse_group", "group": grp, "status": "skipped", "reason": str(exc)}
+                )
                 continue
             if not check.get("is_monophyletic"):
                 msg = check.get("warning") or f"类群 '{grp}' 非单系，跳过折叠"
@@ -465,8 +508,9 @@ def collapse_group(
                         error_key="collapse_non_monophyletic",
                         error_detail=msg,
                     )
-                records.append({"op": "collapse_group", "group": grp,
-                                "status": "skipped", "reason": msg})
+                records.append(
+                    {"op": "collapse_group", "group": grp, "status": "skipped", "reason": msg}
+                )
                 continue
             try:
                 styler.collapse_by_group(grp, label=label, collapse_type=style)
@@ -478,13 +522,19 @@ def collapse_group(
                         error_key="collapse_group_failed",
                         error_detail=str(exc),
                     ) from exc
-                records.append({"op": "collapse_group", "group": grp,
-                                "status": "skipped", "reason": str(exc)})
+                records.append(
+                    {"op": "collapse_group", "group": grp, "status": "skipped", "reason": str(exc)}
+                )
                 continue
             resolved = list(check.get("resolved_taxa") or [])
-            records.append({"op": "collapse_group", "group": grp,
-                            "status": "applied",
-                            "taxa_count": str(len(resolved))})
+            records.append(
+                {
+                    "op": "collapse_group",
+                    "group": grp,
+                    "status": "applied",
+                    "taxa_count": str(len(resolved)),
+                }
+            )
             spec = {"op": "collapse_group", "group": grp}
             if label:
                 spec["label"] = label
@@ -498,10 +548,15 @@ def collapse_group(
             ops.append(spec)
 
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops, taxonomy_levels=taxonomy_levels,
-                                 taxonomy_mapping_file=mapping),
-        records=records, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(
+            ops, taxonomy_levels=taxonomy_levels, taxonomy_mapping_file=mapping
+        ),
+        records=records,
+        run_name=run_name,
         extra={"groups_applied": sum(1 for r in records if r["status"] == "applied")},
     )
 
@@ -536,16 +591,27 @@ def collapse_rank(
     """
     app = get_app(ctx)
     rank = rank or "class"
-    if rank not in ("domain", "superphylum", "phylum", "class", "order",
-                    "family", "genus", "species"):
+    if rank not in (
+        "domain",
+        "superphylum",
+        "phylum",
+        "class",
+        "order",
+        "family",
+        "genus",
+        "species",
+    ):
         raise ToolError(
             "invalid_argument",
             f"rank 必须是 domain|superphylum|phylum|class|order|family|genus|species，得到 '{rank}'",
             error_key="bad_rank",
         )
     if collapse_style not in ("collapse", "cartoon"):
-        raise ToolError("invalid_argument", "collapse_style 必须是 collapse|cartoon",
-                        error_key="bad_collapse_style")
+        raise ToolError(
+            "invalid_argument",
+            "collapse_style 必须是 collapse|cartoon",
+            error_key="bad_collapse_style",
+        )
 
     mapping = resolve_mapping_file(app, taxonomy_mapping_file)
     content, node = resolve_tree_source(tree_content, tree_file, app.workspace)
@@ -560,27 +626,45 @@ def collapse_rank(
         with warnings.catch_warnings(record=True) as caught2:
             warnings.simplefilter("always")
             result = styler.analyze_taxonomy(rank=rank, style_monophyletic=False)
-        records = collapse_monophyletic_groups(styler, result,
-                                               collapse_style=collapse_style, strict=strict)
-        warn_msgs = [str(w.message) for w in caught + caught2
-                     if issubclass(w.category, figtreekit.CompatibilityWarning)]
+        records = collapse_monophyletic_groups(
+            styler, result, collapse_style=collapse_style, strict=strict
+        )
+        warn_msgs = [
+            str(w.message)
+            for w in caught + caught2
+            if issubclass(w.category, figtreekit.CompatibilityWarning)
+        ]
 
     records_total = [{"op": "auto_color", "rank": color_rank, "status": "applied"}] + records
-    ops = [{"op": "auto_color", "rank": color_rank},
-           {"op": "collapse_rank", "rank": rank,
+    ops = [
+        {"op": "auto_color", "rank": color_rank},
+        {
+            "op": "collapse_rank",
+            "rank": rank,
             "collapse_style": collapse_style,
-            "auto_color_rank": color_rank}]
+            "auto_color_rank": color_rank,
+        },
+    ]
     if warn_msgs:
-        records_total.append({"op": "warnings", "status": "info", "reason": "；".join(warn_msgs)[:500]})
-    extra = {"collapsed_groups": sum(1 for r in records if r["status"] == "applied"),
-             "skipped_groups": sum(1 for r in records if r["status"] == "skipped")}
+        records_total.append(
+            {"op": "warnings", "status": "info", "reason": "；".join(warn_msgs)[:500]}
+        )
+    extra = {
+        "collapsed_groups": sum(1 for r in records if r["status"] == "applied"),
+        "skipped_groups": sum(1 for r in records if r["status"] == "skipped"),
+    }
     if warn_msgs:
         extra["warnings"] = warn_msgs
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops, taxonomy_levels=taxonomy_levels,
-                                 taxonomy_mapping_file=mapping),
-        records=records_total, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(
+            ops, taxonomy_levels=taxonomy_levels, taxonomy_mapping_file=mapping
+        ),
+        records=records_total,
+        run_name=run_name,
         extra=extra,
     )
 
@@ -636,11 +720,23 @@ def clear_annotations(
         styler.clear_collapses()
         records.append({"op": "clear_collapses", "status": "applied"})
     return _clade_export(
-        ctx, content=content, node_format=node.format, sr=sr,
-        op_args=_params_ops_args(ops), records=records, run_name=run_name,
+        ctx,
+        content=content,
+        node_format=node.format,
+        sr=sr,
+        op_args=_params_ops_args(ops),
+        records=records,
+        run_name=run_name,
         extra={},
     )
 
 
-__all__ = ["highlight_clade", "color_clade", "set_clade_font", "collapse_clade",
-           "collapse_group", "collapse_rank", "clear_annotations"]
+__all__ = [
+    "highlight_clade",
+    "color_clade",
+    "set_clade_font",
+    "collapse_clade",
+    "collapse_group",
+    "collapse_rank",
+    "clear_annotations",
+]

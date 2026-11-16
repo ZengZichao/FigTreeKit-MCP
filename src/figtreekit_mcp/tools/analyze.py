@@ -24,7 +24,7 @@ from .._core import (
 )
 from .._errors import ToolError, ok_envelope
 from .._logging import get_logger
-from . import TOOLS, get_app, require_run, resolve_mapping_file, tool
+from . import get_app, require_run, resolve_mapping_file, tool
 
 _log = get_logger()
 
@@ -78,20 +78,25 @@ def _resolve_groups(styler: Any, groups: List[Union[str, List[str]]]) -> List[Di
                 res["resolved_taxa"] = taxa
                 caught = []
             taxa = res.get("resolved_taxa") or []
-            warns = [str(w.message) for w in caught
-                     if issubclass(w.category, figtreekit.CompatibilityWarning)]
+            warns = [
+                str(w.message)
+                for w in caught
+                if issubclass(w.category, figtreekit.CompatibilityWarning)
+            ]
             if res.get("warning"):
                 warns.append(str(res["warning"]))
-            resolved.append({
-                "group": entry,
-                "is_monophyletic": bool(res.get("is_monophyletic", False)),
-                "resolved_taxa_count": len(taxa),
-                "resolved_taxa_preview": list(taxa)[:_PREVIEW_LIMIT],
-                "special_identifier": special,
-                "warnings": warns,
-                "mrca_terminals": res.get("mrca_terminals") or [],
-                "note": fallback_note or _special_note(entry),
-            })
+            resolved.append(
+                {
+                    "group": entry,
+                    "is_monophyletic": bool(res.get("is_monophyletic", False)),
+                    "resolved_taxa_count": len(taxa),
+                    "resolved_taxa_preview": list(taxa)[:_PREVIEW_LIMIT],
+                    "special_identifier": special,
+                    "warnings": warns,
+                    "mrca_terminals": res.get("mrca_terminals") or [],
+                    "note": fallback_note or _special_note(entry),
+                }
+            )
         elif isinstance(entry, list):
             if not entry or not all(isinstance(t, str) for t in entry):
                 raise ToolError(
@@ -108,18 +113,22 @@ def _resolve_groups(styler: Any, groups: List[Union[str, List[str]]]) -> List[Di
                     error_key="taxa_check_failed",
                     error_detail=str(exc),
                 ) from exc
-            resolved.append({
-                "group": ", ".join(entry) if len(entry) <= _PREVIEW_LIMIT
-                         else f"{len(entry)} taxa",
-                "is_monophyletic": bool(res.get("is_monophyletic", False)),
-                "resolved_taxa_count": len(entry),
-                "resolved_taxa_preview": list(entry)[:_PREVIEW_LIMIT],
-                "special_identifier": False,
-                "warnings": [] if res.get("mrca_found") else
-                             [f"MRCA 未找到（{len(res.get('extra_taxa', []))} 个末端不在树中）"],
-                "mrca_terminals": res.get("mrca_terminals") or [],
-                "note": None,
-            })
+            resolved.append(
+                {
+                    "group": ", ".join(entry)
+                    if len(entry) <= _PREVIEW_LIMIT
+                    else f"{len(entry)} taxa",
+                    "is_monophyletic": bool(res.get("is_monophyletic", False)),
+                    "resolved_taxa_count": len(entry),
+                    "resolved_taxa_preview": list(entry)[:_PREVIEW_LIMIT],
+                    "special_identifier": False,
+                    "warnings": []
+                    if res.get("mrca_found")
+                    else [f"MRCA 未找到（{len(res.get('extra_taxa', []))} 个末端不在树中）"],
+                    "mrca_terminals": res.get("mrca_terminals") or [],
+                    "note": None,
+                }
+            )
         else:
             raise ToolError(
                 "invalid_argument",
@@ -174,8 +183,9 @@ def check_monophyly(
             "strict 模式下存在非单系类群",
             error_key="non_monophyletic_groups",
             error_detail="\n".join(r["group"] for r in non_mono),
-            details=[{"level": "ERROR", "group": r["group"], "message": "类群非单系"}
-                     for r in non_mono],
+            details=[
+                {"level": "ERROR", "group": r["group"], "message": "类群非单系"} for r in non_mono
+            ],
         )
     notes = [r["note"] for r in results if r.get("note")]
     return ok_envelope(
@@ -239,8 +249,9 @@ def analyze_taxonomy(
             warnings.simplefilter("always")
             result = sr.styler.analyze_taxonomy(rank=rank, style_monophyletic=False)
 
-    warn_list = [str(w.message) for w in caught
-                 if issubclass(w.category, figtreekit.CompatibilityWarning)]
+    warn_list = [
+        str(w.message) for w in caught if issubclass(w.category, figtreekit.CompatibilityWarning)
+    ]
     summary = result.get("summary", {})
 
     def _groups(d: Dict[str, Any]) -> List[Dict[str, str]]:

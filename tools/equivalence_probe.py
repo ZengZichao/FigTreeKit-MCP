@@ -22,8 +22,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
-import os
 import re
 import subprocess
 import sys
@@ -37,10 +35,7 @@ for _candidate in (_ROOT, _ROOT / "src"):
     if _candidate.is_dir() and str(_candidate) not in sys.path:
         sys.path.insert(0, str(_candidate))
 
-from figtreekit_mcp._core import make_styler  # noqa: E402
-from figtreekit_mcp._errors import ToolError  # noqa: E402
 from figtreekit_mcp.params import ParamSpec  # noqa: E402
-from figtreekit_mcp.tools.style import apply_mcp_styling  # noqa: E402
 from figtreekit_mcp.server import build_app_context  # noqa: E402
 
 from ref_test_gen import GOLDEN_SETS, GoldenSet, build_styler  # noqa: E402
@@ -102,16 +97,19 @@ def _normalise_nexus(text: str) -> str:
 # --------------------------------------------------------------------------- #
 # MCP style_tree handler
 # --------------------------------------------------------------------------- #
-def _style_via_mcp(input_tree: str, taxonomy_tsv: str, gs: GoldenSet,
-                   workspace_root: str) -> Dict[str, Any]:
+def _style_via_mcp(
+    input_tree: str, taxonomy_tsv: str, gs: GoldenSet, workspace_root: str
+) -> Dict[str, Any]:
     import types
-    from figtreekit_mcp._workspace import Workspace
 
-    ctx = build_app_context({
-        "workspace_root": workspace_root,
-        "read_roots": [str(Path(input_tree).parent), str(Path(taxonomy_tsv).parent)],
-        "jar": None,
-    })
+    ctx = build_app_context(
+        {
+            "workspace_root": workspace_root,
+            "read_roots": [str(Path(input_tree).parent), str(Path(taxonomy_tsv).parent)],
+            "jar": None,
+        }
+    )
+
     # fake MCP context carrying the AppContext
     class _FakeCtx:
         request_context = types.SimpleNamespace(lifespan_context=ctx)
@@ -124,7 +122,7 @@ def _style_via_mcp(input_tree: str, taxonomy_tsv: str, gs: GoldenSet,
 
     from figtreekit_mcp.tools import TOOLS
 
-    spec = _mcp_spec(gs, input_tree, taxonomy_tsv)
+    _mcp_spec(gs, input_tree, taxonomy_tsv)
     kwargs = {
         "tree_file": input_tree,
         "taxonomy_levels": TAXONOMY_LEVELS,
@@ -238,8 +236,9 @@ def run_probe(
             # 2) MCP & CLI vs API baseline (normalised semantic equality)
             api_match_mcp = _normalise_nexus(mcp_text) == api_text
             api_match_cli = _normalise_nexus(cli_text) == api_text
-            _record(api_match_mcp and api_match_cli,
-                    f"{gs.key}: MCP & CLI ≡ API baseline (normalised)")
+            _record(
+                api_match_mcp and api_match_cli, f"{gs.key}: MCP & CLI ≡ API baseline (normalised)"
+            )
 
             # 3) render (if java + jar available)
             if check_render:
@@ -257,7 +256,9 @@ def _check_render(mcp_nex: Path, workspace_root: str, gs: GoldenSet) -> List[Dic
     from figtreekit_mcp.tools.environment import probe_jar, probe_java
 
     java = probe_java()
-    jar = probe_jar(build_app_context({"workspace_root": workspace_root, "read_roots": [], "jar": None}))
+    jar = probe_jar(
+        build_app_context({"workspace_root": workspace_root, "read_roots": [], "jar": None})
+    )
     if not (java["ok"] and jar["ok"]):
         return [{"ok": True, "message": "render skipped (Java/JAR missing)"}]
 
@@ -270,16 +271,32 @@ def _check_render(mcp_nex: Path, workspace_root: str, gs: GoldenSet) -> List[Dic
     mcp_png = out_dir / "mcp.png"
     try:
         figtreekit.render_with_figtree(
-            str(mcp_nex), str(mcp_png), format="PNG", width=400, height=300,
-            jar_path=jar["path"], timeout=180,
+            str(mcp_nex),
+            str(mcp_png),
+            format="PNG",
+            width=400,
+            height=300,
+            jar_path=jar["path"],
+            timeout=180,
         )
     except Exception as exc:  # noqa: BLE001
         return [{"ok": False, "message": f"render_tree failed: {exc}"}]
 
     # Direct JAR render
     direct_png = out_dir / "direct.png"
-    jar_cmd = ["java", "-jar", jar["path"], "-graphic", "PNG",
-               "-width", "400", "-height", "300", str(mcp_nex), str(direct_png)]
+    jar_cmd = [
+        "java",
+        "-jar",
+        jar["path"],
+        "-graphic",
+        "PNG",
+        "-width",
+        "400",
+        "-height",
+        "300",
+        str(mcp_nex),
+        str(direct_png),
+    ]
     proc = subprocess.run(jar_cmd, capture_output=True, text=True, timeout=180)
     if proc.returncode != 0:
         return [{"ok": False, "message": f"direct JAR render failed: {proc.stderr[-800:]}"}]
@@ -292,12 +309,14 @@ def _check_render(mcp_nex: Path, workspace_root: str, gs: GoldenSet) -> List[Dic
 
     diff = abs(m["red_ratio"] - d["red_ratio"]) + abs(m["background_ratio"] - d["background_ratio"])
     ok = diff < 0.005
-    return [{
-        "ok": ok,
-        "message": f"render pixel diff = {diff:.4f} (<0.5%) "
-                   f"[MCP red={m['red_ratio']:.4f} bg={m['background_ratio']:.4f} | "
-                   f"JAR red={d['red_ratio']:.4f} bg={d['background_ratio']:.4f}]",
-    }]
+    return [
+        {
+            "ok": ok,
+            "message": f"render pixel diff = {diff:.4f} (<0.5%) "
+            f"[MCP red={m['red_ratio']:.4f} bg={m['background_ratio']:.4f} | "
+            f"JAR red={d['red_ratio']:.4f} bg={d['background_ratio']:.4f}]",
+        }
+    ]
 
 
 def main(argv: Optional[List[str]] = None) -> int:

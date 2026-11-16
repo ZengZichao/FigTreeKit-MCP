@@ -10,7 +10,7 @@ the run directory and discloses every rewrite in ``rewrites``.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, List
 
 import pytest
 
@@ -22,7 +22,6 @@ from figtreekit_mcp.tools.passthrough import (
     _rewrite_output_args,
     _scan_artifacts,
     _validate_argv,
-    run_figtreekit_cli,
 )
 
 from conftest import SMALL_TREE, call_app
@@ -91,13 +90,24 @@ class TestRewrite:
     def test_relative_targets_are_rewritten_and_disclosed(self, tmp_path: Path) -> None:
         run = (tmp_path / "run_rel").resolve()
         run.mkdir()
-        argv = ["<input>", "-o", "../../escaped.nex", "-o../attached.nex",
-                "--output=../x.nex", "--render", "../x.png",
-                "--log-file", "../../x.log"]
+        argv = [
+            "<input>",
+            "-o",
+            "../../escaped.nex",
+            "-o../attached.nex",
+            "--output=../x.nex",
+            "--render",
+            "../x.png",
+            "--log-file",
+            "../../x.log",
+        ]
         rewritten = _rewrite_output_args(argv, run)
         values = [
-            rewritten[2], rewritten[3][2:], rewritten[4].split("=", 1)[1],
-            rewritten[6], rewritten[8],
+            rewritten[2],
+            rewritten[3][2:],
+            rewritten[4].split("=", 1)[1],
+            rewritten[6],
+            rewritten[8],
         ]
         for value in values:
             assert Path(value).is_relative_to(run)
@@ -117,8 +127,17 @@ class TestRewrite:
     def test_rewrite_all_output_flags(self, tmp_path: Path) -> None:
         run = tmp_path / "run_x"
         run.mkdir()
-        argv = ["<input>", "-o", "/tmp/a.nex", "--render", "/tmp/b.png",
-                "--output=/tmp/c.nex", "-oATTACHED.nex", "--log-file", "/tmp/x.log"]
+        argv = [
+            "<input>",
+            "-o",
+            "/tmp/a.nex",
+            "--render",
+            "/tmp/b.png",
+            "--output=/tmp/c.nex",
+            "-oATTACHED.nex",
+            "--log-file",
+            "/tmp/x.log",
+        ]
         rewritten = _rewrite_output_args(argv, run)
         for token in rewritten:
             if token.startswith(("-o", "--output", "--render", "--log-file")) and "=" in token:
@@ -141,7 +160,8 @@ class TestRewrite:
 class TestInputWhitelist:
     def test_table_sep_is_a_plain_value(self, app: Any, ctx: Any) -> None:
         res = call_app(
-            "run_figtreekit_cli", ctx,
+            "run_figtreekit_cli",
+            ctx,
             argv=["<input>", "--table-sep", ",", "-o", "table.nex", "--force"],
             tree_content=SMALL_TREE,
         )
@@ -153,36 +173,36 @@ class TestInputWhitelist:
         outside.write_text(">a\nACGT\n", encoding="utf-8")
         with pytest.raises(ToolError) as ei:
             call_app(
-                "run_figtreekit_cli", ctx,
-                argv=["<input>", "--sequences", str(outside),
-                      "-o", "x.nex", "--force"],
+                "run_figtreekit_cli",
+                ctx,
+                argv=["<input>", "--sequences", str(outside), "-o", "x.nex", "--force"],
                 tree_content=SMALL_TREE,
             )
         assert ei.value.code == "access_denied"
 
-    def test_positional_outside_tree_rejected(
-        self, app: Any, ctx: Any, tmp_path: Path
-    ) -> None:
+    def test_positional_outside_tree_rejected(self, app: Any, ctx: Any, tmp_path: Path) -> None:
         outside = tmp_path / "outside.tre"
         outside.write_text(SMALL_TREE, encoding="utf-8")
         with pytest.raises(ToolError) as ei:
             call_app(
-                "run_figtreekit_cli", ctx,
-                argv=["--layout", "rectilinear", str(outside),
-                      "-o", "x.nex", "--force"],
+                "run_figtreekit_cli",
+                ctx,
+                argv=["--layout", "rectilinear", str(outside), "-o", "x.nex", "--force"],
             )
         assert ei.value.code == "access_denied"
 
-    @pytest.mark.parametrize("jar_args", [
-        ["--figtree-jar", "/tmp/arbitrary.jar"],
-        ["--figtree-jar=/tmp/arbitrary.jar"],
-    ])
-    def test_figtree_jar_rejected(
-        self, app: Any, ctx: Any, jar_args: List[str]
-    ) -> None:
+    @pytest.mark.parametrize(
+        "jar_args",
+        [
+            ["--figtree-jar", "/tmp/arbitrary.jar"],
+            ["--figtree-jar=/tmp/arbitrary.jar"],
+        ],
+    )
+    def test_figtree_jar_rejected(self, app: Any, ctx: Any, jar_args: List[str]) -> None:
         with pytest.raises(ToolError) as ei:
             call_app(
-                "run_figtreekit_cli", ctx,
+                "run_figtreekit_cli",
+                ctx,
                 argv=["<input>", *jar_args, "-o", "x.nex", "--force"],
                 tree_content=SMALL_TREE,
             )
@@ -229,9 +249,17 @@ class TestNoShell:
         # — but critically the marker must NOT have been created by a shell.
         with pytest.raises(ToolError) as ei:
             call_app(
-                "run_figtreekit_cli", ctx,
-                argv=["<input>", "--layout", "polar", "-o", "/tmp/evil.nex",
-                      "--force", "$(touch " + marker + ")"],
+                "run_figtreekit_cli",
+                ctx,
+                argv=[
+                    "<input>",
+                    "--layout",
+                    "polar",
+                    "-o",
+                    "/tmp/evil.nex",
+                    "--force",
+                    "$(touch " + marker + ")",
+                ],
                 tree_content=SMALL_TREE,
             )
         assert ei.value.code == "cli_failed"
@@ -240,17 +268,27 @@ class TestNoShell:
     def test_real_style_command(self, app: Any, ctx: Any) -> None:
         """SEC-4 + AC-8: a real styling command runs and writes into run dir."""
         res = call_app(
-            "run_figtreekit_cli", ctx,
-            argv=["<input>", "--layout", "polar", "--tip-labels-show",
-                  "-o", "/tmp/output.nex", "--force"],
+            "run_figtreekit_cli",
+            ctx,
+            argv=[
+                "<input>",
+                "--layout",
+                "polar",
+                "--tip-labels-show",
+                "-o",
+                "/tmp/output.nex",
+                "--force",
+            ],
             tree_content=SMALL_TREE,
         )
         assert res["ok"] is True
         assert res["returncode"] == 0
         assert any("output.nex" in d and "run_" in d for d in res["rewrites"])
         artifacts = res["artifacts"]
-        assert any(a["relative"].endswith("output.nex") and Path(a["absolute"]).is_file()
-                   for a in artifacts)
+        assert any(
+            a["relative"].endswith("output.nex") and Path(a["absolute"]).is_file()
+            for a in artifacts
+        )
 
     def test_failure_envelope_on_nonzero(self, app: Any, ctx: Any) -> None:
         with pytest.raises(ToolError) as ei:
@@ -260,20 +298,27 @@ class TestNoShell:
 
     def test_mutually_exclusive_inputs(self, app: Any, ctx: Any) -> None:
         with pytest.raises(ToolError) as ei:
-            call_app("run_figtreekit_cli", ctx, argv=["<input>", "--help"],
-                     tree_content=SMALL_TREE, input_file="/tmp/x.tre")
+            call_app(
+                "run_figtreekit_cli",
+                ctx,
+                argv=["<input>", "--help"],
+                tree_content=SMALL_TREE,
+                input_file="/tmp/x.tre",
+            )
         assert ei.value.error_key == "mutually_exclusive_input"
 
     def test_input_file_whitelist(self, app: Any, ctx: Any, reads_dir: Path) -> None:
         f = reads_dir / "in.tre"
         f.write_text(SMALL_TREE, encoding="utf-8")
-        res = call_app("run_figtreekit_cli", ctx, argv=["<input>", "--layout", "radial",
-                                                        "-o", "/tmp/x.nex", "--force"],
-                       input_file=str(f))
+        res = call_app(
+            "run_figtreekit_cli",
+            ctx,
+            argv=["<input>", "--layout", "radial", "-o", "/tmp/x.nex", "--force"],
+            input_file=str(f),
+        )
         assert res["ok"] is True
         with pytest.raises(ToolError) as ei:
-            call_app("run_figtreekit_cli", ctx, argv=["<input>", "--help"],
-                     input_file="/etc/hosts")
+            call_app("run_figtreekit_cli", ctx, argv=["<input>", "--help"], input_file="/etc/hosts")
         assert ei.value.code == "access_denied"
 
 

@@ -38,6 +38,7 @@ Usage::
     FIGTREEKIT_GTDB_DIR=/path/to/data python tools/gtdb_acceptance.py
     python tools/gtdb_acceptance.py --no-render
 """
+
 from __future__ import annotations
 
 import argparse
@@ -65,8 +66,7 @@ try:  # pragma: no cover - exercised by running the script
     from figtreekit_mcp.server import create_server, get_active_app
     from figtreekit_mcp.tools import TOOLS
 except ModuleNotFoundError as exc:  # pragma: no cover
-    print(f"[FAIL] missing dependency {exc.name!r}; run bash scripts/setup_env.sh",
-          file=sys.stderr)
+    print(f"[FAIL] missing dependency {exc.name!r}; run bash scripts/setup_env.sh", file=sys.stderr)
     raise SystemExit(2) from exc
 
 _TAXONOMY_LEVELS = "d:domain,sp:superphylum,p:phylum,c:class,o:order,f:family,g:genus"
@@ -133,8 +133,9 @@ def _run_cli(args: List[str], timeout: int = 600) -> subprocess.CompletedProcess
     )
 
 
-def _run_from_cli_command(cli_command: str, output_path: Path,
-                          timeout: int = 600) -> subprocess.CompletedProcess:
+def _run_from_cli_command(
+    cli_command: str, output_path: Path, timeout: int = 600
+) -> subprocess.CompletedProcess:
     """Re-run a returned ``cli_command`` with a different output path.
 
     ``style_tree`` returns a shell-quoted command such as
@@ -209,15 +210,19 @@ def _step1_validate(app: Any, tree: Path) -> Dict[str, Any]:
         return {"ok": False, "message": f"leaf_count={leaf}, expected 700+"}
     return {
         "ok": True,
-        "message": (f"validate_tree ok: leaves={leaf}, trees={res.get('tree_count')}, "
-                    f"format={res.get('format')}"),
+        "message": (
+            f"validate_tree ok: leaves={leaf}, trees={res.get('tree_count')}, "
+            f"format={res.get('format')}"
+        ),
     }
 
 
 def _step2_analyze(app: Any, tree: Path, tax_tsv: Path) -> Dict[str, Any]:
     res = TOOLS["analyze_taxonomy"](
-        _FakeCtx(app), tree_file=str(tree),
-        taxonomy_mapping_file=str(tax_tsv), rank="class",
+        _FakeCtx(app),
+        tree_file=str(tree),
+        taxonomy_mapping_file=str(tax_tsv),
+        rank="class",
         taxonomy_levels=_TAXONOMY_LEVELS,
     )
     if not res.get("ok"):
@@ -227,16 +232,23 @@ def _step2_analyze(app: Any, tree: Path, tax_tsv: Path) -> Dict[str, Any]:
     if mapped <= 0:
         return {"ok": False, "message": "mapped_labels is 0; taxonomy mapping was not applied"}
 
-    proc = _run_cli([
-        str(tree),
-        "--analyze-taxonomy", "class",
-        "--taxonomy-mapping-file", str(tax_tsv),
-        "--taxonomy-levels", _TAXONOMY_LEVELS,
-    ])
+    proc = _run_cli(
+        [
+            str(tree),
+            "--analyze-taxonomy",
+            "class",
+            "--taxonomy-mapping-file",
+            str(tax_tsv),
+            "--taxonomy-levels",
+            _TAXONOMY_LEVELS,
+        ]
+    )
     if proc.returncode != 0:
-        return {"ok": False,
-                "message": f"CLI --analyze-taxonomy failed (rc={proc.returncode}): "
-                           f"{proc.stderr[-400:]}"}
+        return {
+            "ok": False,
+            "message": f"CLI --analyze-taxonomy failed (rc={proc.returncode}): "
+            f"{proc.stderr[-400:]}",
+        }
     try:
         cli = _parse_cli_analysis(proc.stdout + "\n" + proc.stderr)
     except ValueError as exc:
@@ -257,14 +269,15 @@ def _step2_analyze(app: Any, tree: Path, tax_tsv: Path) -> Dict[str, Any]:
         != (round(cli[key], 1) if key == "monophyly_rate" else cli[key])
     ]
     if mismatches:
-        return {"ok": False,
-                "message": "MCP/CLI analysis mismatch: " + "; ".join(mismatches)}
+        return {"ok": False, "message": "MCP/CLI analysis mismatch: " + "; ".join(mismatches)}
     return {
         "ok": True,
-        "message": (f"analyze_taxonomy(class) == CLI: labels={mcp['total_labels']}, "
-                    f"mapped={mcp['mapped_labels']}, groups={mcp['total_groups']}, "
-                    f"mono={mcp['monophyletic']}, non_mono={mcp['non_monophyletic']}, "
-                    f"rate={mcp['monophyly_rate']}%"),
+        "message": (
+            f"analyze_taxonomy(class) == CLI: labels={mcp['total_labels']}, "
+            f"mapped={mcp['mapped_labels']}, groups={mcp['total_groups']}, "
+            f"mono={mcp['monophyletic']}, non_mono={mcp['non_monophyletic']}, "
+            f"rate={mcp['monophyly_rate']}%"
+        ),
     }
 
 
@@ -285,8 +298,7 @@ def _style_kwargs(tree: Path, tax_tsv: Path) -> Dict[str, Any]:
     }
 
 
-def _step3_style(app: Any, tree: Path, tax_tsv: Path,
-                 workspace: Path) -> Dict[str, Any]:
+def _step3_style(app: Any, tree: Path, tax_tsv: Path, workspace: Path) -> Dict[str, Any]:
     res = TOOLS["style_tree"](_FakeCtx(app), **_style_kwargs(tree, tax_tsv))
     if not res.get("ok"):
         return {"ok": False, "message": f"style_tree failed: {res.get('error_key')}"}
@@ -295,11 +307,13 @@ def _step3_style(app: Any, tree: Path, tax_tsv: Path,
         return {"ok": False, "message": "style_tree did not write a .nex file"}
     cli_command = res.get("cli_command", "")
     if not cli_command:
-        return {"ok": False, "message": "style_tree returned no cli_command (reproducibility red line)"}
+        return {
+            "ok": False,
+            "message": "style_tree returned no cli_command (reproducibility red line)",
+        }
     for required in ("--taxonomy-levels", "--taxonomy-mapping-file"):
         if required not in cli_command:
-            return {"ok": False,
-                    "message": f"cli_command is missing {required} (cannot reproduce)"}
+            return {"ok": False, "message": f"cli_command is missing {required} (cannot reproduce)"}
 
     cli_nexus = workspace / "cli_style.nex"
     try:
@@ -307,16 +321,22 @@ def _step3_style(app: Any, tree: Path, tax_tsv: Path,
     except (ValueError, subprocess.TimeoutExpired) as exc:
         return {"ok": False, "message": f"cannot run cli_command: {exc}"}
     if proc.returncode != 0:
-        return {"ok": False,
-                "message": f"CLI style failed (rc={proc.returncode}): {proc.stderr[-400:]}"}
+        return {
+            "ok": False,
+            "message": f"CLI style failed (rc={proc.returncode}): {proc.stderr[-400:]}",
+        }
 
     mcp_bytes = Path(nexus).read_bytes()
     cli_bytes = cli_nexus.read_bytes()
     if mcp_bytes != cli_bytes:
-        return {"ok": False,
-                "message": (f"style .nex differs from CLI: mcp={_sha256(Path(nexus))[:12]} "
-                            f"({len(mcp_bytes)} B) vs cli={_sha256(cli_nexus)[:12]} "
-                            f"({len(cli_bytes)} B)")}
+        return {
+            "ok": False,
+            "message": (
+                f"style .nex differs from CLI: mcp={_sha256(Path(nexus))[:12]} "
+                f"({len(mcp_bytes)} B) vs cli={_sha256(cli_nexus)[:12]} "
+                f"({len(cli_bytes)} B)"
+            ),
+        }
     return {
         "ok": True,
         "message": f"style_tree .nex == CLI .nex (sha256 {_sha256(Path(nexus))[:12]})",
@@ -331,19 +351,29 @@ def _step4_render(app: Any, nexus: str, workspace: Path) -> Dict[str, Any]:
         return {"ok": False, "message": f"Pillow is required for the non-blank check: {exc}"}
 
     png = TOOLS["render_tree"](
-        _FakeCtx(app), nexus_file=nexus, format="PNG", width=2400, height=1600,
+        _FakeCtx(app),
+        nexus_file=nexus,
+        format="PNG",
+        width=2400,
+        height=1600,
     )
     if not png.get("ok"):
-        return {"ok": False,
-                "message": (f"render PNG failed: {png.get('error_key')} "
-                            "(install Java 8+ / figtree_patched.jar, or rerun with --no-render)")}
+        return {
+            "ok": False,
+            "message": (
+                f"render PNG failed: {png.get('error_key')} "
+                "(install Java 8+ / figtree_patched.jar, or rerun with --no-render)"
+            ),
+        }
     image = png.get("image", {})
     png_path = Path(image.get("absolute") or "")
     if not png_path.is_file():
         return {"ok": False, "message": "PNG artifact was not written"}
     if image.get("width") != 2400 or image.get("height") != 1600:
-        return {"ok": False,
-                "message": f"PNG size is {image.get('width')}x{image.get('height')}, expected 2400x1600"}
+        return {
+            "ok": False,
+            "message": f"PNG size is {image.get('width')}x{image.get('height')}, expected 2400x1600",
+        }
 
     with Image.open(png_path) as handle:
         gray = handle.convert("L")
@@ -358,22 +388,22 @@ def _step4_render(app: Any, nexus: str, workspace: Path) -> Dict[str, Any]:
     if total == 0:
         return {"ok": False, "message": "PNG has zero pixels"}
     mean = sum(value * count for value, count in enumerate(histogram)) / total
-    variance = sum((value - mean) ** 2 * count
-                   for value, count in enumerate(histogram)) / total
-    deviation = variance ** 0.5
+    variance = sum((value - mean) ** 2 * count for value, count in enumerate(histogram)) / total
+    deviation = variance**0.5
     if ratio < 0.002:
-        return {"ok": False,
-                "message": f"PNG looks blank: only {ratio:.4%} non-white pixels"}
+        return {"ok": False, "message": f"PNG looks blank: only {ratio:.4%} non-white pixels"}
     if deviation < 1.0:
-        return {"ok": False,
-                "message": f"PNG is a flat single colour (std={deviation:.3f})"}
+        return {"ok": False, "message": f"PNG is a flat single colour (std={deviation:.3f})"}
 
     pdf = TOOLS["render_tree"](
-        _FakeCtx(app), nexus_file=nexus, format="PDF", width=2400, height=1600,
+        _FakeCtx(app),
+        nexus_file=nexus,
+        format="PDF",
+        width=2400,
+        height=1600,
     )
     if not pdf.get("ok"):
-        return {"ok": False,
-                "message": f"render PDF failed: {pdf.get('error_key')}"}
+        return {"ok": False, "message": f"render PDF failed: {pdf.get('error_key')}"}
     pdf_path = Path(pdf.get("image", {}).get("absolute") or "")
     if not pdf_path.is_file():
         return {"ok": False, "message": "PDF artifact was not written"}
@@ -383,18 +413,22 @@ def _step4_render(app: Any, nexus: str, workspace: Path) -> Dict[str, Any]:
 
     return {
         "ok": True,
-        "message": (f"render_tree PNG 2400x1600 + PDF ok "
-                    f"(non-white={ratio:.2%}, pdf={pdf_path.stat().st_size} B)"),
+        "message": (
+            f"render_tree PNG 2400x1600 + PDF ok "
+            f"(non-white={ratio:.2%}, pdf={pdf_path.stat().st_size} B)"
+        ),
     }
 
 
-def _step5_collapse(app: Any, tree: Path, tax_tsv: Path,
-                    workspace: Path) -> Dict[str, Any]:
+def _step5_collapse(app: Any, tree: Path, tax_tsv: Path, workspace: Path) -> Dict[str, Any]:
     res = TOOLS["collapse_rank"](
-        _FakeCtx(app), tree_file=str(tree),
+        _FakeCtx(app),
+        tree_file=str(tree),
         taxonomy_levels=_TAXONOMY_LEVELS,
         taxonomy_mapping_file=str(tax_tsv),
-        rank="class", collapse_style="collapse", auto_color_rank="phylum",
+        rank="class",
+        collapse_style="collapse",
+        auto_color_rank="phylum",
     )
     if not res.get("ok"):
         return {"ok": False, "message": f"collapse_rank failed: {res.get('error_key')}"}
@@ -412,29 +446,44 @@ def _step5_collapse(app: Any, tree: Path, tax_tsv: Path,
     # taxonomy flags (source limitation), so build the equivalent CLI argv
     # explicitly for the parity check.
     cli_nexus = workspace / "cli_collapse.nex"
-    proc = _run_cli([
-        str(tree),
-        "--collapse-rank", "class",
-        "--collapse-style", "collapse",
-        "--auto-color", "phylum",
-        "--taxonomy-levels", _TAXONOMY_LEVELS,
-        "--taxonomy-mapping-file", str(tax_tsv),
-        "-o", str(cli_nexus),
-        "--force",
-    ])
+    proc = _run_cli(
+        [
+            str(tree),
+            "--collapse-rank",
+            "class",
+            "--collapse-style",
+            "collapse",
+            "--auto-color",
+            "phylum",
+            "--taxonomy-levels",
+            _TAXONOMY_LEVELS,
+            "--taxonomy-mapping-file",
+            str(tax_tsv),
+            "-o",
+            str(cli_nexus),
+            "--force",
+        ]
+    )
     if proc.returncode != 0:
-        return {"ok": False,
-                "message": f"CLI --collapse-rank failed (rc={proc.returncode}): "
-                           f"{proc.stderr[-400:]}"}
+        return {
+            "ok": False,
+            "message": f"CLI --collapse-rank failed (rc={proc.returncode}): {proc.stderr[-400:]}",
+        }
     if Path(nexus).read_bytes() != cli_nexus.read_bytes():
-        return {"ok": False,
-                "message": (f"collapse .nex differs from CLI: "
-                            f"mcp={_sha256(Path(nexus))[:12]} vs "
-                            f"cli={_sha256(cli_nexus)[:12]}")}
+        return {
+            "ok": False,
+            "message": (
+                f"collapse .nex differs from CLI: "
+                f"mcp={_sha256(Path(nexus))[:12]} vs "
+                f"cli={_sha256(cli_nexus)[:12]}"
+            ),
+        }
     return {
         "ok": True,
-        "message": (f"collapse_rank(class) collapsed={collapsed}, "
-                    f".nex == CLI (sha256 {_sha256(Path(nexus))[:12]})"),
+        "message": (
+            f"collapse_rank(class) collapsed={collapsed}, "
+            f".nex == CLI (sha256 {_sha256(Path(nexus))[:12]})"
+        ),
     }
 
 
@@ -447,16 +496,19 @@ def main(argv: Optional[List[str]] = None) -> int:
         description="GTDB R232 five-step end-to-end acceptance (AC-12).",
     )
     parser.add_argument(
-        "--read-root", default=None,
+        "--read-root",
+        default=None,
         help="GTDB input directory containing ar53_r232.tree and "
-             "ar53_r232_taxonomy.tsv (env: FIGTREEKIT_GTDB_DIR)",
+        "ar53_r232_taxonomy.tsv (env: FIGTREEKIT_GTDB_DIR)",
     )
     parser.add_argument(
-        "--workspace-root", default=None,
+        "--workspace-root",
+        default=None,
         help="Writable workspace (default: a temporary directory)",
     )
     parser.add_argument(
-        "--no-render", action="store_true",
+        "--no-render",
+        action="store_true",
         help="Skip step 4 (use only when Java/JAR are unavailable)",
     )
     args = parser.parse_args(argv)
@@ -473,19 +525,26 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"       Missing file    : {path}")
         print("       Provide the directory with one of:")
         print("         python tools/gtdb_acceptance.py --read-root /path/to/参考数据-GTDB-R232")
-        print("         FIGTREEKIT_GTDB_DIR=/path/to/参考数据-GTDB-R232 python tools/gtdb_acceptance.py")
+        print(
+            "         FIGTREEKIT_GTDB_DIR=/path/to/参考数据-GTDB-R232 python tools/gtdb_acceptance.py"
+        )
         print(f"       Expected files: {_TREE_NAME}, {_TAX_NAME}")
         return 3
 
-    workspace = Path(args.workspace_root).expanduser().resolve() if args.workspace_root \
+    workspace = (
+        Path(args.workspace_root).expanduser().resolve()
+        if args.workspace_root
         else Path(tempfile.mkdtemp(prefix="figtreekit-gtdb-acceptance-"))
+    )
     workspace.mkdir(parents=True, exist_ok=True)
 
-    create_server({
-        "workspace_root": str(workspace),
-        "read_roots": [str(gtdb)],
-        "jar": None,
-    })
+    create_server(
+        {
+            "workspace_root": str(workspace),
+            "read_roots": [str(gtdb)],
+            "jar": None,
+        }
+    )
     app = get_active_app()
     if app is None:  # pragma: no cover - defensive
         print("[FAIL] create_server() did not install an AppContext", file=sys.stderr)
@@ -502,7 +561,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         try:
             result = fn(*fn_args)
         except ToolError as exc:
-            result = {"ok": False, "message": f"{label} raised {exc.code}/{exc.error_key}: {exc.error}"}
+            result = {
+                "ok": False,
+                "message": f"{label} raised {exc.code}/{exc.error_key}: {exc.error}",
+            }
         except Exception as exc:  # noqa: BLE001 - acceptance reports failures
             result = {"ok": False, "message": f"{label} raised {type(exc).__name__}: {exc}"}
         steps.append(result)
@@ -514,13 +576,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     nexus = (style_result or {}).get("nexus")
 
     if args.no_render:
-        steps.append({"ok": True, "skipped": True,
-                      "message": "render skipped explicitly (--no-render)"})
+        steps.append(
+            {"ok": True, "skipped": True, "message": "render skipped explicitly (--no-render)"}
+        )
     elif nexus:
         run("render", _step4_render, app, nexus, workspace)
     else:
-        steps.append({"ok": False,
-                      "message": "render skipped because step 3 (style) failed"})
+        steps.append({"ok": False, "message": "render skipped because step 3 (style) failed"})
 
     run("collapse", _step5_collapse, app, tree, tax_tsv, workspace)
 

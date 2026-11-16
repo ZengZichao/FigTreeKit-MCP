@@ -42,9 +42,7 @@ def test_assert_readable_rejects_drive_relative(ws: Workspace) -> None:
     assert ei.value.error_key == "drive_relative_path"
 
 
-def test_cleanup_unlinks_symlink_without_touching_target(
-    ws: Workspace, tmp_path: Path
-) -> None:
+def test_cleanup_unlinks_symlink_without_touching_target(ws: Workspace, tmp_path: Path) -> None:
     run = ws.new_run()
     target = tmp_path / "outside"
     target.mkdir()

@@ -11,12 +11,11 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Any, Dict, List
+from typing import Any, List
 
 import pytest
 
 from figtreekit_mcp._concurrency import acquire, release, serialized
-from figtreekit_mcp._errors import ToolError
 from figtreekit_mcp.tools import TOOLS
 
 from conftest import SMALL_TREE, _fake_ctx, call_app
@@ -82,8 +81,13 @@ def _try_lock() -> bool:
 def _style_in_thread(app: Any, results: List[Any]) -> None:
     try:
         ctx = _fake_ctx(app)
-        res = call_app("style_tree", ctx, tree_content=SMALL_TREE, layout="polar",
-                       operations=[{"op": "highlight", "taxa": ["A", "B"], "color": "#FF0000"}])
+        res = call_app(
+            "style_tree",
+            ctx,
+            tree_content=SMALL_TREE,
+            layout="polar",
+            operations=[{"op": "highlight", "taxa": ["A", "B"], "color": "#FF0000"}],
+        )
         results.append(res)
     except Exception as exc:  # noqa: BLE001 - collect for assertions
         results.append(exc)

@@ -22,10 +22,8 @@ codes lives in :data:`EXCEPTION_TO_CODE`.
 from __future__ import annotations
 
 import traceback
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
-import figtreekit
 from figtreekit import exceptions as fk_exc
 
 # --------------------------------------------------------------------------- #

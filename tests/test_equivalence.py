@@ -16,7 +16,6 @@ from typing import Any, Dict
 
 import pytest
 
-from conftest import SHOWCASE_TREE, SHOWCASE_TSV
 
 _TOOLS_DIR = Path(__file__).resolve().parent.parent / "tools"
 
@@ -25,7 +24,8 @@ def _load_probe() -> Any:
     sys.path.insert(0, str(_TOOLS_DIR))
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     spec = importlib.util.spec_from_file_location(
-        "equivalence_probe", _TOOLS_DIR / "equivalence_probe.py")
+        "equivalence_probe", _TOOLS_DIR / "equivalence_probe.py"
+    )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
     return mod
@@ -37,25 +37,23 @@ def test_golden_equivalence(showcase_tree: Path, showcase_tsv: Path, tmp_path: P
     probe = _load_probe()
     ws = tmp_path / "ws"
     ws.mkdir(parents=True, exist_ok=True)
-    report = probe.run_probe(str(showcase_tree), str(showcase_tsv), str(ws),
-                             check_render=False)
+    report = probe.run_probe(str(showcase_tree), str(showcase_tsv), str(ws), check_render=False)
     assert report["ok"], "equivalence probe failed:\n" + _fmt(report)
 
 
 @pytest.mark.slow
 @pytest.mark.timeout(900)
-def test_golden_equivalence_with_render(showcase_tree: Path, showcase_tsv: Path,
-                                        tmp_path: Path) -> None:
+def test_golden_equivalence_with_render(
+    showcase_tree: Path, showcase_tsv: Path, tmp_path: Path
+) -> None:
     probe = _load_probe()
     ws = tmp_path / "ws_render"
     ws.mkdir(parents=True, exist_ok=True)
-    report = probe.run_probe(str(showcase_tree), str(showcase_tsv), str(ws),
-                             check_render=True)
+    report = probe.run_probe(str(showcase_tree), str(showcase_tsv), str(ws), check_render=True)
     assert report["ok"], "equivalence+render probe failed:\n" + _fmt(report)
 
 
 def _fmt(report: Dict[str, Any]) -> str:
     return "\n".join(
-        f"  [{'PASS' if c['ok'] else 'FAIL'}] {c['message']}"
-        for c in report["checks"]
+        f"  [{'PASS' if c['ok'] else 'FAIL'}] {c['message']}" for c in report["checks"]
     )

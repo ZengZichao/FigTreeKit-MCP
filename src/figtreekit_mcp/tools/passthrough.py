@@ -10,7 +10,6 @@ and every rewrite is disclosed in the ``rewrites`` field (SEC-4).
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 import time
@@ -22,7 +21,7 @@ from mcp.server.fastmcp import Context
 from .._errors import ToolError, ok_envelope
 from .._logging import get_logger
 from .._workspace import RunStorage
-from . import TOOLS, get_app, require_run, tool
+from . import get_app, require_run, tool
 
 _log = get_logger()
 
@@ -32,30 +31,89 @@ _MAX_TAIL = 65536
 _INPUT_FILE_FLAGS = ("--config", "--taxonomy-mapping-file", "--sequences")
 # Output flags plus the unambiguous argparse abbreviations of `--output` and
 # `--log-file` (argparse accepts `--outp`, `--log`, ...).
-_OUTPUT_FLAGS = ("-o", "--output", "--outp", "--outpu", "--out",
-                 "--render", "--log-file", "--log-fil", "--log-fi",
-                 "--log-f", "--log-", "--log")
+_OUTPUT_FLAGS = (
+    "-o",
+    "--output",
+    "--outp",
+    "--outpu",
+    "--out",
+    "--render",
+    "--log-file",
+    "--log-fil",
+    "--log-fi",
+    "--log-f",
+    "--log-",
+    "--log",
+)
 # Every flag from figtreekit/_cli.py that consumes a value; used to skip
 # flag values when looking for positional input tokens.
-_VALUE_FLAGS = frozenset({
-    "-o", "--output", "--outp", "--outpu", "--out", "--config",
-    "--multi-tree", "--seed",
-    "--taxonomy-levels", "--taxonomy-delimiter-mode", "--taxonomy-table-sep",
-    "--taxonomy-source-priority", "--taxonomy-mapping-file", "--table-sep",
-    "--mol-type", "--sequences", "--log-file", "--log-fil", "--log-fi",
-    "--log-f", "--log-", "--log", "--figtree-jar",
-    "--render", "--render-format", "--render-width", "--render-height",
-    "--branch-width", "--branch-color-attribute", "--background-color",
-    "--foreground-color", "--selection-color", "--layout", "--expansion",
-    "--zoom", "--rooting-type", "--transform", "--order", "--clade",
-    "--collapse-taxa", "--collapse-rank", "--collapse-style", "--auto-color",
-    "--highlight", "--color-clade", "--font-clade", "--analyze-taxonomy",
-    "--check-monophyly", "--set", "--font-name", "--font-size",
-    "--font-style", "--label-color", "--node-display-attribute",
-    "--branch-display-attribute", "--root-age", "--scale-factor",
-    "--angular-range", "--root-angle", "--radial-spread", "--curvature",
-    "--root-length", "--legend-position",
-})
+_VALUE_FLAGS = frozenset(
+    {
+        "-o",
+        "--output",
+        "--outp",
+        "--outpu",
+        "--out",
+        "--config",
+        "--multi-tree",
+        "--seed",
+        "--taxonomy-levels",
+        "--taxonomy-delimiter-mode",
+        "--taxonomy-table-sep",
+        "--taxonomy-source-priority",
+        "--taxonomy-mapping-file",
+        "--table-sep",
+        "--mol-type",
+        "--sequences",
+        "--log-file",
+        "--log-fil",
+        "--log-fi",
+        "--log-f",
+        "--log-",
+        "--log",
+        "--figtree-jar",
+        "--render",
+        "--render-format",
+        "--render-width",
+        "--render-height",
+        "--branch-width",
+        "--branch-color-attribute",
+        "--background-color",
+        "--foreground-color",
+        "--selection-color",
+        "--layout",
+        "--expansion",
+        "--zoom",
+        "--rooting-type",
+        "--transform",
+        "--order",
+        "--clade",
+        "--collapse-taxa",
+        "--collapse-rank",
+        "--collapse-style",
+        "--auto-color",
+        "--highlight",
+        "--color-clade",
+        "--font-clade",
+        "--analyze-taxonomy",
+        "--check-monophyly",
+        "--set",
+        "--font-name",
+        "--font-size",
+        "--font-style",
+        "--label-color",
+        "--node-display-attribute",
+        "--branch-display-attribute",
+        "--root-age",
+        "--scale-factor",
+        "--angular-range",
+        "--root-angle",
+        "--radial-spread",
+        "--curvature",
+        "--root-length",
+        "--legend-position",
+    }
+)
 
 
 def _validate_argv(argv: Any) -> List[str]:
@@ -79,8 +137,7 @@ def _validate_argv(argv: Any) -> List[str]:
         )
     for a in argv:
         if not isinstance(a, str):
-            raise ToolError("invalid_argument", "argv 元素必须是字符串",
-                            error_key="bad_argv_type")
+            raise ToolError("invalid_argument", "argv 元素必须是字符串", error_key="bad_argv_type")
         if len(a) > _MAX_ARG_LEN:
             raise ToolError(
                 "invalid_argument",
@@ -107,7 +164,7 @@ def _rewrite_output_args(argv: List[str], run_dir: Path) -> List[str]:
                 matched = True
                 break
             if a.startswith(flag + "="):
-                target = a[len(flag) + 1:]
+                target = a[len(flag) + 1 :]
                 result.append(f"{flag}={_force_into_run(target, run_dir)}")
                 i += 1
                 matched = True
@@ -149,9 +206,7 @@ def _force_into_run(target: str, run_dir: Path) -> str:
     return str(resolved)
 
 
-def _verify_inputs(
-    argv: List[str], app: Any, run: Optional[RunStorage] = None
-) -> None:
+def _verify_inputs(argv: List[str], app: Any, run: Optional[RunStorage] = None) -> None:
     """Whitelist-check referenced input files inside argv (SEC access model).
 
     A value-aware scan skips the value of every known flag, so only genuine
@@ -204,9 +259,7 @@ def _verify_inputs(
             _check_readable(app, str(candidate), base_dir)
 
 
-def _check_readable(
-    app: Any, path: str, base_dir: Optional[Path] = None
-) -> None:
+def _check_readable(app: Any, path: str, base_dir: Optional[Path] = None) -> None:
     if base_dir is None:
         base_dir = app.workspace.root
     candidate = Path(path).expanduser()
@@ -296,7 +349,9 @@ def run_figtreekit_cli(
     tail_bytes = max(1, min(int(capture_tail_bytes or _MAX_TAIL), _MAX_TAIL))
 
     if proc.returncode != 0:
-        joiner = (proc.stdout or "")[-tail_bytes:] + "\n[stderr]\n" + (proc.stderr or "")[-tail_bytes:]
+        joiner = (
+            (proc.stdout or "")[-tail_bytes:] + "\n[stderr]\n" + (proc.stderr or "")[-tail_bytes:]
+        )
         raise ToolError(
             "cli_failed",
             f"figtreekit 命令以退出码 {proc.returncode} 结束",
@@ -331,16 +386,14 @@ def _diff_rewrites(before: List[str], after: List[str]) -> List[str]:
     for b, a in zip(before, after):
         if b != a:
             out.append(f"{b} → {a}")
-    for b in before[len(after):]:
+    for b in before[len(after) :]:
         out.append(f"{b} → (dropped)")
-    for a in after[len(before):]:
+    for a in after[len(before) :]:
         out.append(f"(added) → {a}")
     return out
 
 
-def _scan_artifacts(
-    run: RunStorage, before: Optional[set] = None
-) -> List[Dict[str, Any]]:
+def _scan_artifacts(run: RunStorage, before: Optional[set] = None) -> List[Dict[str, Any]]:
     """Register run-dir artifacts (images get mime/data_uri like T20).
 
     ``before`` is accepted for backwards compatibility and unused.
@@ -352,8 +405,19 @@ def _scan_artifacts(
             continue
         if p.name == "input.tre":
             continue
-        if p.suffix.lower() in (".nex", ".png", ".pdf", ".svg", ".jpg",
-                                ".jpeg", ".log", ".txt", ".json", ".newick", ".tre"):
+        if p.suffix.lower() in (
+            ".nex",
+            ".png",
+            ".pdf",
+            ".svg",
+            ".jpg",
+            ".jpeg",
+            ".log",
+            ".txt",
+            ".json",
+            ".newick",
+            ".tre",
+        ):
             try:
                 if not p.resolve().is_relative_to(run_dir):
                     continue

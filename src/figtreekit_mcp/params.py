@@ -18,7 +18,7 @@ Clade operations (``operations``) are also rendered here so that
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from ._errors import ToolError
@@ -181,10 +181,14 @@ class ParamSpec:
         if self.collapse_rank is not None and self.collapse_rank not in TAXONOMY_RANKS:
             _err("collapse_rank", f"collapse_rank 必须是 {TAXONOMY_RANKS} 之一")
         if self.taxonomy_delimiter_mode is not None and self.taxonomy_delimiter_mode not in (
-            "reverse", "greedy", "segment",
+            "reverse",
+            "greedy",
+            "segment",
         ):
-            _err("taxonomy_delimiter_mode",
-                 "taxonomy_delimiter_mode 必须是 reverse|greedy|segment 之一")
+            _err(
+                "taxonomy_delimiter_mode",
+                "taxonomy_delimiter_mode 必须是 reverse|greedy|segment 之一",
+            )
         if self.table_sep is not None:
             if not isinstance(self.table_sep, str) or len(self.table_sep) != 1:
                 _err("table_sep", "table_sep 必须是单个字符（映射文件列分隔符）")
@@ -232,10 +236,18 @@ class ParamSpec:
                     _err(fname, f"{fname} 必须在 [0, 360] 度")
 
         if self.tip_label_font_style is not None:
-            if not isinstance(self.tip_label_font_style, int) or isinstance(self.tip_label_font_style, bool):
-                _err("tip_label_font_style", "tip_label_font_style 必须是整数 0(plain)/1(bold)/2(italic)/3(bold-italic)")
+            if not isinstance(self.tip_label_font_style, int) or isinstance(
+                self.tip_label_font_style, bool
+            ):
+                _err(
+                    "tip_label_font_style",
+                    "tip_label_font_style 必须是整数 0(plain)/1(bold)/2(italic)/3(bold-italic)",
+                )
             elif self.tip_label_font_style not in (0, 1, 2, 3):
-                _err("tip_label_font_style", "tip_label_font_style 必须是 0(plain)/1(bold)/2(italic)/3(bold-italic)")
+                _err(
+                    "tip_label_font_style",
+                    "tip_label_font_style 必须是 0(plain)/1(bold)/2(italic)/3(bold-italic)",
+                )
         if self.run_name is not None:
             if not isinstance(self.run_name, str) or not _RUN_NAME_RE.match(self.run_name):
                 _err("run_name", "run_name 必须是字符串，且仅允许字母/数字/_/-，长度 1-64")
@@ -260,109 +272,219 @@ class ParamSpec:
     @staticmethod
     def _validate_operation(index: int, op: Any, errs: List[Dict[str, str]]) -> None:
         if not isinstance(op, dict):
-            errs.append({"level": "ERROR", "field": f"operations[{index}]", "message": "操作必须是对象"})
+            errs.append(
+                {"level": "ERROR", "field": f"operations[{index}]", "message": "操作必须是对象"}
+            )
             return
         field_prefix = f"operations[{index}]"
         op_name = op.get("op")
-        known = {"highlight", "color", "color_all", "font", "collapse",
-                 "collapse_group", "collapse_rank", "clear_hilights"}
+        known = {
+            "highlight",
+            "color",
+            "color_all",
+            "font",
+            "collapse",
+            "collapse_group",
+            "collapse_rank",
+            "clear_hilights",
+        }
         if op_name not in known:
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.op",
-                         "message": f"op 必须是 {sorted(known)} 之一，得到 {op_name!r}"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.op",
+                    "message": f"op 必须是 {sorted(known)} 之一，得到 {op_name!r}",
+                }
+            )
             return
 
         # --- taxa: strictly a non-empty list of non-empty strings ----------
         taxa = op.get("taxa")
         if op_name in ("highlight", "color", "color_all", "font", "collapse"):
             if not isinstance(taxa, list) or not taxa:
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.taxa",
-                             "message": "taxa 必须是非空字符串数组 list[str]（如 [\"A\", \"B\"]）"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.taxa",
+                        "message": 'taxa 必须是非空字符串数组 list[str]（如 ["A", "B"]）',
+                    }
+                )
             elif not all(isinstance(t, str) and t.strip() for t in taxa):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.taxa",
-                             "message": "taxa 数组元素必须是非空字符串"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.taxa",
+                        "message": "taxa 数组元素必须是非空字符串",
+                    }
+                )
         elif taxa is not None and (
             not isinstance(taxa, list) or not all(isinstance(t, str) and t.strip() for t in taxa)
         ):
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.taxa",
-                         "message": "taxa 若提供必须是非空字符串数组 list[str]"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.taxa",
+                    "message": "taxa 若提供必须是非空字符串数组 list[str]",
+                }
+            )
 
         # --- group ----------------------------------------------------------
         if op_name == "collapse_group":
             group = op.get("group")
             if not isinstance(group, str) or not group.strip():
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.group",
-                             "message": "collapse_group 需要非空 group 类群名"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.group",
+                        "message": "collapse_group 需要非空 group 类群名",
+                    }
+                )
         elif op.get("group") is not None and not isinstance(op.get("group"), str):
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.group",
-                         "message": "group 必须是字符串"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.group",
+                    "message": "group 必须是字符串",
+                }
+            )
 
         # --- colors ---------------------------------------------------------
         color = op.get("color")
         if color is not None:
             if not isinstance(color, str) or not _HEX_COLOR_RE.match(color):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.color",
-                             "message": f"颜色必须是 #RRGGBB 形式，得到 '{color}'"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.color",
+                        "message": f"颜色必须是 #RRGGBB 形式，得到 '{color}'",
+                    }
+                )
 
         # --- collapse style -------------------------------------------------
         ctype = op.get("collapse_type")
         if ctype is not None and (not isinstance(ctype, str) or ctype not in COLLAPSE_STYLES):
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.collapse_type",
-                         "message": f"collapse_type 必须是 {COLLAPSE_STYLES} 之一"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.collapse_type",
+                    "message": f"collapse_type 必须是 {COLLAPSE_STYLES} 之一",
+                }
+            )
         cstyle = op.get("collapse_style")
         if cstyle is not None and (not isinstance(cstyle, str) or cstyle not in COLLAPSE_STYLES):
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.collapse_style",
-                         "message": f"collapse_style 必须是 {COLLAPSE_STYLES} 之一"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.collapse_style",
+                    "message": f"collapse_style 必须是 {COLLAPSE_STYLES} 之一",
+                }
+            )
 
         # --- ranks ----------------------------------------------------------
         for rank_key in ("rank", "auto_color_rank"):
             rank = op.get(rank_key)
             if rank is not None and (not isinstance(rank, str) or rank not in TAXONOMY_RANKS):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.{rank_key}",
-                             "message": f"{rank_key} 必须是 {TAXONOMY_RANKS} 之一，得到 '{rank}'"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.{rank_key}",
+                        "message": f"{rank_key} 必须是 {TAXONOMY_RANKS} 之一，得到 '{rank}'",
+                    }
+                )
 
         # --- label / font ---------------------------------------------------
         label = op.get("label")
         if label is not None and not isinstance(label, str):
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.label",
-                         "message": "label 必须是字符串"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.label",
+                    "message": "label 必须是字符串",
+                }
+            )
         font_name = op.get("font_name")
         if font_name is not None and (not isinstance(font_name, str) or not font_name.strip()):
-            errs.append({"level": "ERROR", "field": f"{field_prefix}.font_name",
-                         "message": "font_name 必须是非空字符串"})
+            errs.append(
+                {
+                    "level": "ERROR",
+                    "field": f"{field_prefix}.font_name",
+                    "message": "font_name 必须是非空字符串",
+                }
+            )
         fstyle = op.get("font_style")
         if fstyle is not None:
             if not isinstance(fstyle, int) or isinstance(fstyle, bool):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.font_style",
-                             "message": "font_style 必须是 0-3"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.font_style",
+                        "message": "font_style 必须是 0-3",
+                    }
+                )
             elif fstyle not in (0, 1, 2, 3):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.font_style",
-                             "message": "font_style 必须是 0-3"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.font_style",
+                        "message": "font_style 必须是 0-3",
+                    }
+                )
 
         # --- numeric fields -------------------------------------------------
         width = op.get("width")
         if width is not None:
             if not isinstance(width, (int, float)) or isinstance(width, bool):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.width",
-                             "message": "width 必须是数值"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.width",
+                        "message": "width 必须是数值",
+                    }
+                )
             elif width <= 0:
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.width",
-                             "message": "width 必须 > 0"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.width",
+                        "message": "width 必须 > 0",
+                    }
+                )
         offset = op.get("offset")
         if offset is not None:
             if not isinstance(offset, (int, float)) or isinstance(offset, bool):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.offset",
-                             "message": "offset 必须是整数（CLI 仅接受整数偏移）"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.offset",
+                        "message": "offset 必须是整数（CLI 仅接受整数偏移）",
+                    }
+                )
             elif float(offset) != int(offset):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.offset",
-                             "message": "offset 必须是整数（CLI 的 --highlight 偏移按 int 解析）"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.offset",
+                        "message": "offset 必须是整数（CLI 的 --highlight 偏移按 int 解析）",
+                    }
+                )
         font_size = op.get("font_size")
         if font_size is not None:
             if not isinstance(font_size, (int, float)) or isinstance(font_size, bool):
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.font_size",
-                             "message": "font_size 必须是正整数"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.font_size",
+                        "message": "font_size 必须是正整数",
+                    }
+                )
             elif float(font_size) != int(font_size) or int(font_size) <= 0:
-                errs.append({"level": "ERROR", "field": f"{field_prefix}.font_size",
-                             "message": "font_size 必须是正整数"})
+                errs.append(
+                    {
+                        "level": "ERROR",
+                        "field": f"{field_prefix}.font_size",
+                        "message": "font_size 必须是正整数",
+                    }
+                )
 
     # ------------------------------------------------------------------ #
     # to_cli_args — exact argv for `python -m figtreekit`
@@ -506,7 +628,12 @@ class ParamSpec:
             if self.auto_color_rank is None:
                 args += ["--auto-color", "phylum", "--collapse-rank", self.collapse_rank]
             else:
-                args += ["--auto-color", self.auto_color_rank, "--collapse-rank", self.collapse_rank]
+                args += [
+                    "--auto-color",
+                    self.auto_color_rank,
+                    "--collapse-rank",
+                    self.collapse_rank,
+                ]
             if self.collapse_style != "collapse":
                 args += ["--collapse-style", self.collapse_style]
 
@@ -638,12 +765,17 @@ class ParamSpec:
             cfg["trees.rooting"] = True
         if self.rooting_type is not None:
             cfg["trees.rooting"] = True
-            cfg["trees.rootingType"] = "User Selection" if self.rooting_type == "user" else "Mid-point"
+            cfg["trees.rootingType"] = (
+                "User Selection" if self.rooting_type == "user" else "Mid-point"
+            )
         if self.transform is not None:
             cfg["trees.transformType"] = self.transform.capitalize()
         if self.order is not None:
-            cfg["trees.orderType"] = ("Increasing Node Density" if self.order == "increasing"
-                                      else "Decreasing Node Density")
+            cfg["trees.orderType"] = (
+                "Increasing Node Density"
+                if self.order == "increasing"
+                else "Decreasing Node Density"
+            )
 
         if self.background_color is not None:
             cfg["appearance.backgroundColour"] = self.background_color.lower()

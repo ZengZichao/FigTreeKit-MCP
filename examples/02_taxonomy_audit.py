@@ -31,6 +31,7 @@ Usage (from the repository root)::
 Exit codes: 0 = audit + coloring succeeded, 1 = a tool failed or coloring was
 a no-op, 2 = usage error / missing input / missing dependency.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -72,8 +73,16 @@ _BUILTIN_TREE = (
 )
 _TAXONOMY_LEVELS = "d:domain,sp:superphylum,p:phylum,c:class,o:order,f:family,g:genus"
 _PALETTE = [
-    "#E53935", "#D81B60", "#8E24AA", "#5E35B1", "#3949AB",
-    "#1E88E5", "#00897B", "#43A047", "#F4511E", "#6D4C41",
+    "#E53935",
+    "#D81B60",
+    "#8E24AA",
+    "#5E35B1",
+    "#3949AB",
+    "#1E88E5",
+    "#00897B",
+    "#43A047",
+    "#F4511E",
+    "#6D4C41",
 ]
 _COLOR_RE = re.compile(r"!color=#[0-9a-fA-F]{6}")
 
@@ -98,27 +107,25 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--tree",
         default=os.environ.get("FIGTREEKIT_MCP_TREE"),
-        help="Newick/Nexus tree file (default: built-in 12-tip tree; "
-             "env: FIGTREEKIT_MCP_TREE)",
+        help="Newick/Nexus tree file (default: built-in 12-tip tree; env: FIGTREEKIT_MCP_TREE)",
     )
     parser.add_argument(
         "--mapping",
         default=os.environ.get("FIGTREEKIT_MCP_MAPPING"),
         help="Optional taxonomy mapping table (TSV/CSV); only needed when "
-             "tip labels carry no taxonomy (env: FIGTREEKIT_MCP_MAPPING)",
+        "tip labels carry no taxonomy (env: FIGTREEKIT_MCP_MAPPING)",
     )
     parser.add_argument(
         "--rank",
         default="phylum",
-        choices=("domain", "superphylum", "phylum", "class", "order",
-                 "family", "genus", "species"),
+        choices=("domain", "superphylum", "phylum", "class", "order", "family", "genus", "species"),
         help="Taxonomic rank to audit (default: phylum)",
     )
     parser.add_argument(
         "--workspace",
         default=os.environ.get("FIGTREEKIT_MCP_WORKSPACE"),
         help="Writable workspace directory (default: a temporary directory; "
-             "env: FIGTREEKIT_MCP_WORKSPACE)",
+        "env: FIGTREEKIT_MCP_WORKSPACE)",
     )
     return parser
 
@@ -132,11 +139,13 @@ def _resolve_workspace(value: Optional[str]) -> str:
 
 
 def _make_ctx(workspace: str, read_roots: List[str]) -> _FakeCtx:
-    create_server({
-        "workspace_root": workspace,
-        "read_roots": read_roots,
-        "jar": None,
-    })
+    create_server(
+        {
+            "workspace_root": workspace,
+            "read_roots": read_roots,
+            "jar": None,
+        }
+    )
     app = get_active_app()
     if app is None:  # pragma: no cover - defensive
         raise RuntimeError("create_server() did not install an AppContext")
@@ -174,8 +183,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.mapping:
         mapping_path = Path(args.mapping).expanduser().resolve()
         if not mapping_path.is_file():
-            print(f"[FAIL] mapping file not found: {mapping_path}",
-                  file=sys.stderr)
+            print(f"[FAIL] mapping file not found: {mapping_path}", file=sys.stderr)
             return 2
 
     read_roots: List[str] = []
@@ -202,11 +210,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         # 1) Monophyly audit -------------------------------------------------
         analysis = TOOLS["analyze_taxonomy"](
-            ctx, **target, **taxonomy_kwargs, rank=args.rank,
+            ctx,
+            **target,
+            **taxonomy_kwargs,
+            rank=args.rank,
         )
         if not analysis.get("ok"):
-            print(f"[FAIL] analyze_taxonomy: {analysis.get('error_key')}",
-                  file=sys.stderr)
+            print(f"[FAIL] analyze_taxonomy: {analysis.get('error_key')}", file=sys.stderr)
             return 1
         summary: Dict[str, Any] = analysis.get("summary", {})
         mono: List[Dict[str, Any]] = analysis.get("monophyletic", [])
@@ -214,41 +224,47 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         # 2) Completeness ----------------------------------------------------
         completeness = TOOLS["taxonomy_completeness"](
-            ctx, **target, **taxonomy_kwargs,
+            ctx,
+            **target,
+            **taxonomy_kwargs,
         )
         if not completeness.get("ok"):
-            print(f"[FAIL] taxonomy_completeness: "
-                  f"{completeness.get('error_key')}", file=sys.stderr)
+            print(f"[FAIL] taxonomy_completeness: {completeness.get('error_key')}", file=sys.stderr)
             return 1
     except ToolError as exc:
         _print_error("taxonomy audit failed", exc)
         return 1
     except Exception as exc:  # noqa: BLE001 - report, do not traceback
-        print(f"[FAIL] unexpected error: {type(exc).__name__}: {exc}",
-              file=sys.stderr)
+        print(f"[FAIL] unexpected error: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
     print(f"== analyze_taxonomy(rank={args.rank}) ==")
     print(
         "  total_labels={t} mapped={m} unmapped={u}".format(
-            t=summary.get("total_labels"), m=summary.get("mapped_labels"),
+            t=summary.get("total_labels"),
+            m=summary.get("mapped_labels"),
             u=summary.get("unmapped_labels"),
         )
     )
     print(
-        "  groups={g} monophyletic={mo} non_monophyletic={nmo} "
-        "monophyly_rate={rate}%".format(
-            g=summary.get("total_groups"), mo=summary.get("monophyletic"),
+        "  groups={g} monophyletic={mo} non_monophyletic={nmo} monophyly_rate={rate}%".format(
+            g=summary.get("total_groups"),
+            mo=summary.get("monophyletic"),
             nmo=summary.get("non_monophyletic"),
             rate=summary.get("monophyly_rate"),
         )
     )
-    print("  monophyletic    : " + (", ".join(
-        f"{_display_group(g['group'])}({g['taxa_count']})" for g in mono
-    ) or "none"))
-    print("  non-monophyletic: " + (", ".join(
-        f"{_display_group(g['group'])}({g['taxa_count']})" for g in non_mono
-    ) or "none"))
+    print(
+        "  monophyletic    : "
+        + (", ".join(f"{_display_group(g['group'])}({g['taxa_count']})" for g in mono) or "none")
+    )
+    print(
+        "  non-monophyletic: "
+        + (
+            ", ".join(f"{_display_group(g['group'])}({g['taxa_count']})" for g in non_mono)
+            or "none"
+        )
+    )
 
     print("== taxonomy_completeness ==")
     print(
@@ -269,19 +285,25 @@ def main(argv: Optional[List[str]] = None) -> int:
     operations: List[Dict[str, Any]] = []
     per_tip_targets: Dict[str, List[str]] = {}
     if mapping_path is not None:
-        print("  note: mapping file supplied - explicit per-tip override is "
-              "skipped; auto_color_rank uses the resolved mapping.")
+        print(
+            "  note: mapping file supplied - explicit per-tip override is "
+            "skipped; auto_color_rank uses the resolved mapping."
+        )
     else:
         for index, group in enumerate(non_mono):
             name = group["group"]
             try:
                 check = TOOLS["check_monophyly"](
-                    ctx, **target, groups=[name],
+                    ctx,
+                    **target,
+                    groups=[name],
                     taxonomy_levels=_TAXONOMY_LEVELS,
                 )
             except ToolError as exc:
-                print(f"  note: cannot resolve tips for {_display_group(name)} "
-                      f"({exc.error_key}); auto_color_rank still colors it.")
+                print(
+                    f"  note: cannot resolve tips for {_display_group(name)} "
+                    f"({exc.error_key}); auto_color_rank still colors it."
+                )
                 continue
             entry = check["results"][0]
             tips = list(entry.get("resolved_taxa_preview") or [])
@@ -290,9 +312,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 # One ``color`` op per terminal: set_clade_color colors the
                 # MRCA branch, so a single op with all tips would over-color.
                 for tip in tips:
-                    operations.append(
-                        {"op": "color", "taxa": [tip], "color": color}
-                    )
+                    operations.append({"op": "color", "taxa": [tip], "color": color})
                 per_tip_targets[name] = tips
             else:
                 print(
@@ -305,7 +325,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("== style_tree (phylum auto-color + explicit non-monophyletic tips) ==")
     try:
         styled = TOOLS["style_tree"](
-            ctx, **target, **taxonomy_kwargs,
+            ctx,
+            **target,
+            **taxonomy_kwargs,
             layout="rectilinear",
             tip_labels="show",
             auto_color_rank=args.rank,
@@ -328,8 +350,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"  cli_command={styled.get('cli_command')}")
     print("  operations_applied:")
     for record in styled.get("operations_applied", []):
-        detail = ", ".join(f"{k}={v}" for k, v in record.items()
-                           if k not in ("op", "status"))
+        detail = ", ".join(f"{k}={v}" for k, v in record.items() if k not in ("op", "status"))
         suffix = f" ({detail})" if detail else ""
         print(f"    - {record.get('op')}: {record.get('status')}{suffix}")
 
@@ -337,22 +358,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     text = Path(nexus).read_text(encoding="utf-8")
     annotations = _COLOR_RE.findall(text)
     if not annotations:
-        print("[FAIL] exported Nexus contains no !color annotations - "
-              "coloring was a no-op", file=sys.stderr)
+        print(
+            "[FAIL] exported Nexus contains no !color annotations - coloring was a no-op",
+            file=sys.stderr,
+        )
         return 1
-    print(f"[PASS] exported Nexus contains {len(annotations)} !color "
-          "annotation(s)")
+    print(f"[PASS] exported Nexus contains {len(annotations)} !color annotation(s)")
 
     failed = False
     for name, tips in per_tip_targets.items():
         missing = [tip for tip in tips if not _tip_is_colored(text, tip)]
         if missing:
             failed = True
-            print(f"[FAIL] {_display_group(name)}: {len(missing)} of "
-                  f"{len(tips)} tips lack !color", file=sys.stderr)
+            print(
+                f"[FAIL] {_display_group(name)}: {len(missing)} of {len(tips)} tips lack !color",
+                file=sys.stderr,
+            )
         else:
-            print(f"[PASS] {_display_group(name)}: {len(tips)}/{len(tips)} "
-                  "non-monophyletic tips carry !color")
+            print(
+                f"[PASS] {_display_group(name)}: {len(tips)}/{len(tips)} "
+                "non-monophyletic tips carry !color"
+            )
     if failed:
         return 1
 
@@ -360,11 +386,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("Audit result:")
     print("| group | monophyletic | taxa_count |")
     print("|-------|--------------|------------|")
-    for group in sorted(mono + non_mono,
-                        key=lambda g: (-g["taxa_count"], g["group"])):
+    for group in sorted(mono + non_mono, key=lambda g: (-g["taxa_count"], g["group"])):
         is_mono = any(g["group"] == group["group"] for g in mono)
-        print(f"| {_display_group(group['group'])} | "
-              f"{'yes' if is_mono else 'no'} | {group['taxa_count']} |")
+        print(
+            f"| {_display_group(group['group'])} | "
+            f"{'yes' if is_mono else 'no'} | {group['taxa_count']} |"
+        )
     print()
     print("Result: taxonomy audit completed; Nexus coloring verified.")
     return 0

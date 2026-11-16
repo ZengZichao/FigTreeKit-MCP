@@ -39,8 +39,9 @@ def probe_java() -> Dict[str, Any]:
         "ok": ok,
         "version": version,
         "message": raw.strip() if raw else "",
-        "hints": (["Java 8+ 未安装或不在 PATH。请安装 JDK/JRE 8+（如 Adoptium）。"]
-                  if not ok else []),
+        "hints": (
+            ["Java 8+ 未安装或不在 PATH。请安装 JDK/JRE 8+（如 Adoptium）。"] if not ok else []
+        ),
     }
 
 
@@ -62,15 +63,23 @@ def probe_jar(app: "Any", jar_path: Optional[str] = None) -> Dict[str, Any]:
                 ],
             }
         if not p.is_file():
-            return {"ok": False, "path": str(p),
-                    "hints": [f"JAR 不存在：{p}。可执行 setup_figtree 安装。"]}
+            return {
+                "ok": False,
+                "path": str(p),
+                "hints": [f"JAR 不存在：{p}。可执行 setup_figtree 安装。"],
+            }
         return {"ok": True, "path": str(p), "hints": []}
     found = figtreekit.find_figtree_jar()
     if found:
         return {"ok": True, "path": found, "hints": []}
-    return {"ok": False, "path": None,
-            "hints": ["figtree_patched.jar 未找到。运行 setup_figtree 下载/编译，"
-                      "或通过 --jar / FIGTREE_JAR 指定。"]}
+    return {
+        "ok": False,
+        "path": None,
+        "hints": [
+            "figtree_patched.jar 未找到。运行 setup_figtree 下载/编译，"
+            "或通过 --jar / FIGTREE_JAR 指定。"
+        ],
+    }
 
 
 def render_ready(app: "Any", jar_path: Optional[str] = None) -> Dict[str, Any]:
@@ -95,8 +104,11 @@ def get_environment(ctx: Context) -> Dict[str, Any]:
         biopython_version=app.biopython_version,
         python_version=app.python_version,
         mcp_sdk_version=app.mcp_version,
-        pillow=({"ok": True, "version": app.pillow_version} if app.pillow_version
-                else {"ok": False, "version": None}),
+        pillow=(
+            {"ok": True, "version": app.pillow_version}
+            if app.pillow_version
+            else {"ok": False, "version": None}
+        ),
         java=env["java"],
         jar=env["jar"],
         workspace_root=app.workspace_root,
@@ -231,7 +243,7 @@ def setup_figtree(
     for line in (proc.stdout or "").splitlines():
         if line.startswith("__FTK_RESULT__"):
             try:
-                result = json.loads(line[len("__FTK_RESULT__"):])
+                result = json.loads(line[len("__FTK_RESULT__") :])
             except json.JSONDecodeError:  # pragma: no cover - defensive
                 result = {}
         elif line.strip():

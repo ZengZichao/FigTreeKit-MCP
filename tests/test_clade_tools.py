@@ -21,7 +21,6 @@ from pathlib import Path
 import pytest
 
 from figtreekit_mcp._errors import ToolError
-from conftest import call_app
 
 from conftest import SMALL_TREE
 
@@ -60,8 +59,11 @@ def _replay_cli(res, tmp_path: Path, name: str = "cli") -> str:
 # --------------------------------------------------------------------------- #
 class TestHighlightClade:
     def test_highlight(self, call, app):
-        res = call("highlight_clade", tree_content=SMALL_TREE,
-                   highlights=[{"taxa": ["A", "B"], "color": "#804548"}])
+        res = call(
+            "highlight_clade",
+            tree_content=SMALL_TREE,
+            highlights=[{"taxa": ["A", "B"], "color": "#804548"}],
+        )
         assert res["ok"] is True
         assert res["highlights_applied"] == 1
         records = res["operations_applied"]
@@ -69,8 +71,12 @@ class TestHighlightClade:
         assert records[0]["status"] == "applied"
 
     def test_clear_existing(self, call):
-        res = call("highlight_clade", tree_content=SMALL_TREE,
-                   highlights=[{"taxa": ["C"]}], clear_existing=True)
+        res = call(
+            "highlight_clade",
+            tree_content=SMALL_TREE,
+            highlights=[{"taxa": ["C"]}],
+            clear_existing=True,
+        )
         assert res["ok"] is True
         ops = [r["op"] for r in res["operations_applied"]]
         assert "clear_hilights" in ops
@@ -83,29 +89,37 @@ class TestHighlightClade:
 
     def test_bad_taxa(self, call):
         with pytest.raises(ToolError) as ei:
-            call("highlight_clade", tree_content=SMALL_TREE,
-                 highlights=[{"taxa": "notalist"}])
+            call("highlight_clade", tree_content=SMALL_TREE, highlights=[{"taxa": "notalist"}])
         assert ei.value.code == "invalid_argument"
         assert ei.value.error_key == "bad_taxa"
 
     def test_bad_color(self, call):
         with pytest.raises(ToolError) as ei:
-            call("highlight_clade", tree_content=SMALL_TREE,
-                 highlights=[{"taxa": ["A"], "color": "red"}])
+            call(
+                "highlight_clade",
+                tree_content=SMALL_TREE,
+                highlights=[{"taxa": ["A"], "color": "red"}],
+            )
         assert ei.value.code == "invalid_argument"
         assert ei.value.error_key == "bad_color"
 
     def test_fractional_offset_rejected(self, call):
         with pytest.raises(ToolError) as ei:
-            call("highlight_clade", tree_content=SMALL_TREE,
-                 highlights=[{"taxa": ["A"], "offset": 0.5}])
+            call(
+                "highlight_clade",
+                tree_content=SMALL_TREE,
+                highlights=[{"taxa": ["A"], "offset": 0.5}],
+            )
         assert ei.value.code == "invalid_argument"
         assert ei.value.error_key == "bad_offset"
 
     def test_clear_existing_removes_embedded_hilights(self, call):
-        res = call("highlight_clade", tree_content=EMBEDDED_ANNOTATIONS,
-                   clear_existing=True,
-                   highlights=[{"taxa": ["C"], "color": "#00FF00"}])
+        res = call(
+            "highlight_clade",
+            tree_content=EMBEDDED_ANNOTATIONS,
+            clear_existing=True,
+            highlights=[{"taxa": ["C"], "color": "#00FF00"}],
+        )
         text = _mcp_nexus(res)
         # The embedded band from the input is gone; the new one is present.
         assert "#ff0000" not in text
@@ -118,15 +132,21 @@ class TestHighlightClade:
 # --------------------------------------------------------------------------- #
 class TestColorClade:
     def test_color(self, call):
-        res = call("color_clade", tree_content=SMALL_TREE,
-                   colors=[{"taxa": ["A", "B"], "color": "#2196F3"}])
+        res = call(
+            "color_clade",
+            tree_content=SMALL_TREE,
+            colors=[{"taxa": ["A", "B"], "color": "#2196F3"}],
+        )
         assert res["ok"] is True
         assert res["colors_applied"] == 1
         assert res["operations_applied"][0]["op"] == "color"
 
     def test_color_all(self, call):
-        res = call("color_clade", tree_content=SMALL_TREE,
-                   colors=[{"taxa": ["C"], "color": "#2196F3", "all": True}])
+        res = call(
+            "color_clade",
+            tree_content=SMALL_TREE,
+            colors=[{"taxa": ["C"], "color": "#2196F3", "all": True}],
+        )
         assert res["ok"] is True
         assert res["operations_applied"][0]["op"] == "color_all"
 
@@ -142,17 +162,20 @@ class TestColorClade:
 # --------------------------------------------------------------------------- #
 class TestSetCladeFont:
     def test_font(self, call):
-        res = call("set_clade_font", tree_content=SMALL_TREE,
-                   fonts=[{"taxa": ["A"], "font_name": "Arial",
-                           "font_style": 1, "font_size": 14}])
+        res = call(
+            "set_clade_font",
+            tree_content=SMALL_TREE,
+            fonts=[{"taxa": ["A"], "font_name": "Arial", "font_style": 1, "font_size": 14}],
+        )
         assert res["ok"] is True
         assert res["fonts_applied"] == 1
         assert res["operations_applied"][0]["op"] == "font"
 
     def test_bad_font(self, call):
         with pytest.raises(ToolError) as ei:
-            call("set_clade_font", tree_content=SMALL_TREE,
-                 fonts=[{"taxa": ["A"], "font_style": 9}])
+            call(
+                "set_clade_font", tree_content=SMALL_TREE, fonts=[{"taxa": ["A"], "font_style": 9}]
+            )
         assert ei.value.code == "invalid_argument"
         assert ei.value.error_key == "bad_font"
 
@@ -162,23 +185,32 @@ class TestSetCladeFont:
 # --------------------------------------------------------------------------- #
 class TestCollapseClade:
     def test_collapse(self, call):
-        res = call("collapse_clade", tree_content=SMALL_TREE,
-                   collapses=[{"taxa": ["A", "B"], "label": "Clade1"}])
+        res = call(
+            "collapse_clade",
+            tree_content=SMALL_TREE,
+            collapses=[{"taxa": ["A", "B"], "label": "Clade1"}],
+        )
         assert res["ok"] is True
         assert res["collapses_applied"] == 1
         assert res["operations_applied"][0]["op"] == "collapse"
 
     def test_cartoon_style(self, call):
-        res = call("collapse_clade", tree_content=SMALL_TREE,
-                   collapses=[{"taxa": ["A", "B"], "collapse_type": "cartoon"}])
+        res = call(
+            "collapse_clade",
+            tree_content=SMALL_TREE,
+            collapses=[{"taxa": ["A", "B"], "collapse_type": "cartoon"}],
+        )
         assert res["ok"] is True
         # The cartoon style is reflected in the reproducible cli_command.
         assert "type=cartoon" in res["cli_command"]
 
     def test_bad_collapse_type(self, call):
         with pytest.raises(ToolError) as ei:
-            call("collapse_clade", tree_content=SMALL_TREE,
-                 collapses=[{"taxa": ["A"], "collapse_type": "bogus"}])
+            call(
+                "collapse_clade",
+                tree_content=SMALL_TREE,
+                collapses=[{"taxa": ["A"], "collapse_type": "bogus"}],
+            )
         assert ei.value.code == "invalid_argument"
         assert ei.value.error_key == "bad_collapse_type"
 
@@ -188,8 +220,7 @@ class TestCollapseClade:
 # --------------------------------------------------------------------------- #
 class TestCollapseGroup:
     def test_collapse_monophyletic_group(self, call):
-        res = call("collapse_group", tree_content=PHY_TREE,
-                   groups=[{"group": "Phy1"}])
+        res = call("collapse_group", tree_content=PHY_TREE, groups=[{"group": "Phy1"}])
         assert res["ok"] is True
         assert res["groups_applied"] == 1
         assert res["operations_applied"][0]["op"] == "collapse_group"
@@ -208,11 +239,15 @@ class TestCollapseGroup:
         assert ei.value.error_key == "missing_groups"
 
     def test_unknown_group_does_not_abort_others(self, call):
-        res = call("collapse_group", tree_content=GROUP_TREE, groups=[
-            {"group": "_Phy1"},
-            {"group": "NoSuchGroup"},
-            {"group": "_Phy2"},
-        ])
+        res = call(
+            "collapse_group",
+            tree_content=GROUP_TREE,
+            groups=[
+                {"group": "_Phy1"},
+                {"group": "NoSuchGroup"},
+                {"group": "_Phy2"},
+            ],
+        )
         records = res["operations_applied"]
         assert [r["status"] for r in records] == ["applied", "skipped", "applied"]
         assert records[1]["group"] == "NoSuchGroup"
@@ -224,21 +259,28 @@ class TestCollapseGroup:
 
     def test_unknown_group_strict_raises_monophyly_error(self, call):
         with pytest.raises(ToolError) as ei:
-            call("collapse_group", tree_content=GROUP_TREE,
-                 groups=[{"group": "NoSuchGroup"}], strict=True)
+            call(
+                "collapse_group",
+                tree_content=GROUP_TREE,
+                groups=[{"group": "NoSuchGroup"}],
+                strict=True,
+            )
         assert ei.value.code == "monophyly_error"
 
     def test_cli_command_uses_clade(self, call, tmp_path):
-        res = call("collapse_group", tree_content=GROUP_TREE,
-                   groups=[{"group": "_Phy1"}])
+        res = call("collapse_group", tree_content=GROUP_TREE, groups=[{"group": "_Phy1"}])
         assert "--clade _Phy1" in res["cli_command"]
         assert "--collapse-taxa" not in res["cli_command"]
         assert _replay_cli(res, tmp_path) == _mcp_nexus(res)
 
     def test_label_and_type_reproduced_via_collapse_taxa(self, call, tmp_path):
-        res = call("collapse_group", tree_content=GROUP_TREE, groups=[
-            {"group": "_Phy1", "label": "X", "collapse_type": "cartoon"},
-        ])
+        res = call(
+            "collapse_group",
+            tree_content=GROUP_TREE,
+            groups=[
+                {"group": "_Phy1", "label": "X", "collapse_type": "cartoon"},
+            ],
+        )
         text = _mcp_nexus(res)
         assert "[&!cartoon=" in text
         assert "label=X" in res["cli_command"]
@@ -253,9 +295,12 @@ class TestCollapseGroup:
             "D\tPhy2\tCls3\nE\tPhy2\tCls3\nF\tPhy3\tCls4\n",
             encoding="utf-8",
         )
-        res = call("collapse_group", tree_content="(A:1,(B:1,C:1):1,(D:1,E:1):1,F:1);",
-                   groups=[{"group": "Cls3"}],
-                   taxonomy_mapping_file=str(mapping))
+        res = call(
+            "collapse_group",
+            tree_content="(A:1,(B:1,C:1):1,(D:1,E:1):1,F:1);",
+            groups=[{"group": "Cls3"}],
+            taxonomy_mapping_file=str(mapping),
+        )
         assert res["operations_applied"][0]["status"] == "applied"
         assert res["operations_applied"][0]["taxa_count"] == "2"
         assert "--taxonomy-mapping-file" in res["cli_command"]
@@ -281,8 +326,7 @@ class TestCollapseRank:
 
     def test_bad_collapse_style(self, call):
         with pytest.raises(ToolError) as ei:
-            call("collapse_rank", tree_content=SMALL_TREE,
-                 rank="class", collapse_style="bogus")
+            call("collapse_rank", tree_content=SMALL_TREE, rank="class", collapse_style="bogus")
         assert ei.value.code == "invalid_argument"
         assert ei.value.error_key == "bad_collapse_style"
 
@@ -305,8 +349,12 @@ class TestClearAnnotations:
         assert any(r["op"] == "strip_annotations" for r in res["operations_applied"])
 
     def test_nothing_to_clear(self, call):
-        res = call("clear_annotations", tree_content=SMALL_TREE,
-                   clear_hilights=False, clear_collapses=False)
+        res = call(
+            "clear_annotations",
+            tree_content=SMALL_TREE,
+            clear_hilights=False,
+            clear_collapses=False,
+        )
         assert res["ok"] is True
         assert res["operations_applied"] == []
 
@@ -319,10 +367,13 @@ class TestClearAnnotations:
         assert "[&R]" in text
 
     def test_strip_annotations_keeps_root_marker(self, call):
-        res = call("clear_annotations",
-                   tree_content="[&R] ((A:1,B:1)[&foo=1]:1,C:2);",
-                   clear_hilights=False, clear_collapses=False,
-                   strip_annotations=True)
+        res = call(
+            "clear_annotations",
+            tree_content="[&R] ((A:1,B:1)[&foo=1]:1,C:2);",
+            clear_hilights=False,
+            clear_collapses=False,
+            strip_annotations=True,
+        )
         text = _mcp_nexus(res)
         assert "[&foo=1]" not in text
         assert "[&R]" in text
@@ -332,9 +383,13 @@ class TestClearAnnotations:
 
     def test_strip_annotations_matches_cli_rooting(self, call, tmp_path):
         content = "[&R] ((A:1,B:1)[&foo=1]:1,C:2);"
-        res = call("clear_annotations", tree_content=content,
-                   clear_hilights=False, clear_collapses=False,
-                   strip_annotations=True)
+        res = call(
+            "clear_annotations",
+            tree_content=content,
+            clear_hilights=False,
+            clear_collapses=False,
+            strip_annotations=True,
+        )
         # A plain CLI run over the same input also keeps the [&R] root marker.
         probe_dir = tmp_path / "probe"
         probe_dir.mkdir()
@@ -343,11 +398,15 @@ class TestClearAnnotations:
         out = probe_dir / "out.nex"
         proc = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(src), "-o", str(out), "--force"],
-            capture_output=True, text=True, timeout=300,
+            capture_output=True,
+            text=True,
+            timeout=300,
         )
         assert proc.returncode == 0, proc.stderr[-1000:]
-        cli_tree = [l for l in out.read_text(encoding="utf-8").splitlines() if "tree " in l]
-        mcp_tree = [l for l in _mcp_nexus(res).splitlines() if "tree " in l]
+        cli_tree = [
+            line for line in out.read_text(encoding="utf-8").splitlines() if "tree " in line
+        ]
+        mcp_tree = [line for line in _mcp_nexus(res).splitlines() if "tree " in line]
         assert cli_tree and mcp_tree
         assert "[&R]" in cli_tree[0]
         assert "[&R]" in mcp_tree[0]
@@ -358,12 +417,12 @@ class TestClearAnnotations:
 # --------------------------------------------------------------------------- #
 class TestRealDataClade:
     def test_collapse_group_gtdb(self, call_app_data, ar53_phylum_tree, gtdb_dir):
-        res = call_app_data("collapse_group", tree_file=str(ar53_phylum_tree),
-                            groups=[{"group": "Undinarchaeota"}])
+        res = call_app_data(
+            "collapse_group", tree_file=str(ar53_phylum_tree), groups=[{"group": "Undinarchaeota"}]
+        )
         assert res["ok"] is True
         assert res["groups_applied"] == 1
 
     def test_collapse_rank_gtdb(self, call_app_data, ar53_phylum_tree, gtdb_dir):
-        res = call_app_data("collapse_rank", tree_file=str(ar53_phylum_tree),
-                            rank="phylum")
+        res = call_app_data("collapse_rank", tree_file=str(ar53_phylum_tree), rank="phylum")
         assert res["ok"] is True

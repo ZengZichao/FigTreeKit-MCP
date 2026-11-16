@@ -23,9 +23,7 @@ from figtreekit_mcp._errors import ToolError
 from conftest import SMALL_TREE, MULTI_TREE_NEXUS
 
 # Custom rank prefix: family is only recognised with taxonomy_levels="x:family".
-CUSTOM_PREFIX_TREE = (
-    "(A_x__Fam1:1,B_x__Fam1:1,(C_x__Fam2:1,D_x__Fam2:1):1,E_x__Fam1:1);"
-)
+CUSTOM_PREFIX_TREE = "(A_x__Fam1:1,B_x__Fam1:1,(C_x__Fam2:1,D_x__Fam2:1):1,E_x__Fam1:1);"
 # Embedded taxonomy (format A) with phylum / class ranks.
 BIG_PHYLUM_TREE = (
     "(A_p__Phy1_c__Cls1:1,(B_p__Phy1_c__Cls1:1,C_p__Phy1_c__Cls2:1):1,"
@@ -79,8 +77,7 @@ class TestStyleTree:
         assert "#NEXUS" in text
 
     def test_cli_command_reproducible(self, call, app):
-        res = call("style_tree", tree_content=SMALL_TREE,
-                   layout="rectilinear", tip_labels="show")
+        res = call("style_tree", tree_content=SMALL_TREE, layout="rectilinear", tip_labels="show")
         cmd = res["cli_command"]
         # cli_command is a single whitespace-joined string (view-only).
         assert isinstance(cmd, str)
@@ -94,23 +91,31 @@ class TestStyleTree:
         assert "--tip-labels-show" in cmd
 
     def test_config_json_valid(self, call):
-        res = call("style_tree", tree_content=SMALL_TREE,
-                   background_color="#ffffff", branch_width=2.0)
+        res = call(
+            "style_tree", tree_content=SMALL_TREE, background_color="#ffffff", branch_width=2.0
+        )
         cfg = json.loads(res["config_json"])
         assert cfg["appearance.backgroundColour"].lower() == "#ffffff"
         assert cfg["appearance.branchLineWidth"] == 2.0
 
     def test_angle_conversion_in_config(self, call):
         # (360-deg)*1000 mapping for angular-range params.
-        res = call("style_tree", tree_content=SMALL_TREE,
-                   polar_angular_range_degrees=360, polar_root_angle_degrees=180)
+        res = call(
+            "style_tree",
+            tree_content=SMALL_TREE,
+            polar_angular_range_degrees=360,
+            polar_root_angle_degrees=180,
+        )
         cfg = json.loads(res["config_json"])
         assert cfg["polarLayout.angularRange"] == 0
         assert cfg["polarLayout.rootAngle"] == 0
 
     def test_operations_applied(self, call):
-        res = call("style_tree", tree_content=SMALL_TREE,
-                   operations=[{"op": "highlight", "taxa": ["A", "B"]}])
+        res = call(
+            "style_tree",
+            tree_content=SMALL_TREE,
+            operations=[{"op": "highlight", "taxa": ["A", "B"]}],
+        )
         assert res["ok"] is True
         records = res["operations_applied"]
         assert records[0]["op"] == "highlight"
@@ -152,12 +157,15 @@ class TestStyleTree:
 # --------------------------------------------------------------------------- #
 class TestStyleParity:
     def test_taxonomy_levels_custom_prefix(self, call, tmp_path):
-        without = call("style_tree", tree_content=CUSTOM_PREFIX_TREE,
-                       auto_color_rank="family")
+        without = call("style_tree", tree_content=CUSTOM_PREFIX_TREE, auto_color_rank="family")
         # Read before the next call: both calls share one run directory.
         plain_text = _mcp_nexus(without)
-        with_levels = call("style_tree", tree_content=CUSTOM_PREFIX_TREE,
-                           taxonomy_levels="x:family", auto_color_rank="family")
+        with_levels = call(
+            "style_tree",
+            tree_content=CUSTOM_PREFIX_TREE,
+            taxonomy_levels="x:family",
+            auto_color_rank="family",
+        )
         text = _mcp_nexus(with_levels)
         assert "[&!color=" not in plain_text
         assert "[&!color=" in text
@@ -166,11 +174,14 @@ class TestStyleParity:
         assert _replay_cli(with_levels, tmp_path) == text
 
     def test_apply_config_taxonomy_levels(self, call):
-        plain = call("apply_config", tree_content=CUSTOM_PREFIX_TREE,
-                     auto_color_rank="family")
+        plain = call("apply_config", tree_content=CUSTOM_PREFIX_TREE, auto_color_rank="family")
         plain_text = _mcp_nexus(plain)
-        res = call("apply_config", tree_content=CUSTOM_PREFIX_TREE,
-                   taxonomy_levels="x:family", auto_color_rank="family")
+        res = call(
+            "apply_config",
+            tree_content=CUSTOM_PREFIX_TREE,
+            taxonomy_levels="x:family",
+            auto_color_rank="family",
+        )
         assert "[&!color=" not in plain_text
         assert "[&!color=#e91e63]" in _mcp_nexus(res)
         assert res["operations_applied"][0]["op"] == "auto_color"
@@ -178,9 +189,13 @@ class TestStyleParity:
     def test_table_sep_is_mapping_file_delimiter(self, call, app, tmp_path):
         mapping = app.workspace.root / "map.pipe"
         mapping.write_text(PIPE_MAPPING, encoding="utf-8")
-        res = call("style_tree", tree_content=TIPS_TREE,
-                   taxonomy_mapping_file=str(mapping), table_sep="|",
-                   operations=[{"op": "collapse_group", "group": "Cls3"}])
+        res = call(
+            "style_tree",
+            tree_content=TIPS_TREE,
+            taxonomy_mapping_file=str(mapping),
+            table_sep="|",
+            operations=[{"op": "collapse_group", "group": "Cls3"}],
+        )
         records = res["operations_applied"]
         assert records[0]["status"] == "applied"
         assert records[0]["group"] == "Cls3"
@@ -191,15 +206,20 @@ class TestStyleParity:
 
     def test_color_all_loses_to_auto_color_like_cli(self, call, tmp_path):
         res = call(
-            "style_tree", tree_content=BIG_PHYLUM_TREE,
+            "style_tree",
+            tree_content=BIG_PHYLUM_TREE,
             auto_color_rank="phylum",
-            operations=[{"op": "color_all",
-                         "taxa": ["D_p__Phy2_c__Cls3", "E_p__Phy2_c__Cls3"],
-                         "color": "#000000"}],
+            operations=[
+                {
+                    "op": "color_all",
+                    "taxa": ["D_p__Phy2_c__Cls3", "E_p__Phy2_c__Cls3"],
+                    "color": "#000000",
+                }
+            ],
         )
         text = _mcp_nexus(res)
         # CLI order: annotations first, then auto-color → phylum palette wins.
-        tree_line = next(l for l in text.splitlines() if "tree " in l)
+        tree_line = next(line for line in text.splitlines() if "tree " in line)
         assert "#000000" not in tree_line
         assert "D_p__Phy2_c__Cls3:1[&!color=#e91e63]" in text
         ops = [r["op"] for r in res["operations_applied"]]
@@ -208,8 +228,12 @@ class TestStyleParity:
         assert _replay_cli(res, tmp_path) == text
 
     def test_collapse_rank_post_color_uses_phylum_palette(self, call, tmp_path):
-        res = call("style_tree", tree_content=BIG_PHYLUM_TREE,
-                   auto_color_rank="class", collapse_rank="class")
+        res = call(
+            "style_tree",
+            tree_content=BIG_PHYLUM_TREE,
+            auto_color_rank="class",
+            collapse_rank="class",
+        )
         text = _mcp_nexus(res)
         # Cls3 receives the phylum (Phy2) palette colour, not the class one.
         assert "Cls3:1[&!collapse={Cls3,0.0},!color=#e91e63]" in text
@@ -217,8 +241,7 @@ class TestStyleParity:
         assert _replay_cli(res, tmp_path) == text
 
     def test_auto_color_non_phylum_rank_palette(self, call, tmp_path):
-        res = call("style_tree", tree_content=BIG_PHYLUM_TREE,
-                   auto_color_rank="class")
+        res = call("style_tree", tree_content=BIG_PHYLUM_TREE, auto_color_rank="class")
         text = _mcp_nexus(res)
         # 4 class groups → first three palette colours are used.
         for color in ("#e91e63", "#2196f3", "#4caf50"):
@@ -227,9 +250,11 @@ class TestStyleParity:
         assert _replay_cli(res, tmp_path) == text
 
     def test_collapse_warning_recorded_not_error(self, call):
-        res = call("style_tree", tree_content=SMALL_TREE,
-                   operations=[{"op": "collapse", "taxa": ["A", "C"],
-                                "label": "AC"}])
+        res = call(
+            "style_tree",
+            tree_content=SMALL_TREE,
+            operations=[{"op": "collapse", "taxa": ["A", "C"], "label": "AC"}],
+        )
         rec = res["operations_applied"][0]
         assert rec["op"] == "collapse"
         assert rec["status"] == "skipped"
@@ -237,8 +262,11 @@ class TestStyleParity:
         assert rec["status"] != "error"
 
     def test_collapse_group_op_uses_clade_flag(self, call, tmp_path):
-        res = call("style_tree", tree_content=GROUP_TREE,
-                   operations=[{"op": "collapse_group", "group": "_Phy1"}])
+        res = call(
+            "style_tree",
+            tree_content=GROUP_TREE,
+            operations=[{"op": "collapse_group", "group": "_Phy1"}],
+        )
         text = _mcp_nexus(res)
         assert "!collapse={_Phy1" in text
         assert "--clade _Phy1" in res["cli_command"]
@@ -246,8 +274,9 @@ class TestStyleParity:
         assert _replay_cli(res, tmp_path) == text
 
     def test_legend_hide_replay(self, call, tmp_path):
-        res = call("style_tree", tree_content=CUSTOM_PREFIX_TREE,
-                   legend="hide", legend_position="top")
+        res = call(
+            "style_tree", tree_content=CUSTOM_PREFIX_TREE, legend="hide", legend_position="top"
+        )
         assert "--legend-hide" not in res["cli_command"]
         assert "--set legend.isShown=false" in res["cli_command"]
         cfg = json.loads(res["config_json"])
@@ -257,8 +286,11 @@ class TestStyleParity:
 
     def test_fractional_offset_rejected_at_tool_level(self, call):
         with pytest.raises(ToolError) as ei:
-            call("style_tree", tree_content=SMALL_TREE,
-                 operations=[{"op": "highlight", "taxa": ["A"], "offset": 0.5}])
+            call(
+                "style_tree",
+                tree_content=SMALL_TREE,
+                operations=[{"op": "highlight", "taxa": ["A"], "offset": 0.5}],
+            )
         assert ei.value.code == "invalid_argument"
         assert "offset" in ei.value.error_detail
 
@@ -289,8 +321,7 @@ class TestMultiTreeReproducibility:
         assert _replay_cli(res, tmp_path) == text
 
     def test_random_with_seed_is_reproducible(self, call, tmp_path):
-        res = call("style_tree", tree_content=MULTI_TREE_NEXUS,
-                   multi_tree="random", seed=7)
+        res = call("style_tree", tree_content=MULTI_TREE_NEXUS, multi_tree="random", seed=7)
         text = _mcp_nexus(res)
         # random.Random(7).randrange(2) == random.seed(7); randint(0, 1) == 1
         assert "tree t2" in text and "tree t1" not in text
@@ -299,8 +330,7 @@ class TestMultiTreeReproducibility:
 
     def test_split_and_all_keep_trees_and_warn(self, call):
         for mode in ("split", "all"):
-            res = call("style_tree", tree_content=MULTI_TREE_NEXUS,
-                       multi_tree=mode)
+            res = call("style_tree", tree_content=MULTI_TREE_NEXUS, multi_tree=mode)
             text = _mcp_nexus(res)
             assert "tree t1" in text and "tree t2" in text
             assert any("multi_tree=split/all" in w for w in res["warnings"])
@@ -311,8 +341,7 @@ class TestMultiTreeReproducibility:
 # --------------------------------------------------------------------------- #
 class TestApplyConfig:
     def test_apply_dict(self, call):
-        res = call("apply_config", tree_content=SMALL_TREE,
-                   config={"background.color": "#FF0000"})
+        res = call("apply_config", tree_content=SMALL_TREE, config={"background.color": "#FF0000"})
         assert res["ok"] is True
         cfg = json.loads(res["config_json"])
         assert cfg["background.color"].lower() == "#ff0000"
@@ -324,8 +353,11 @@ class TestApplyConfig:
         assert ei.value.error_key == "bad_config_type"
 
     def test_operations_with_config(self, call):
-        res = call("apply_config", tree_content=SMALL_TREE,
-                   operations=[{"op": "color", "taxa": ["C"], "color": "#2196F3"}])
+        res = call(
+            "apply_config",
+            tree_content=SMALL_TREE,
+            operations=[{"op": "color", "taxa": ["C"], "color": "#2196F3"}],
+        )
         assert res["ok"] is True
         records = res["operations_applied"]
         assert any(r["op"] == "color" and r["status"] == "applied" for r in records)
@@ -359,12 +391,17 @@ class TestExportNexus:
 # --------------------------------------------------------------------------- #
 class TestRealDataStyle:
     def test_style_showcase_tree(self, call_app_data, showcase_tree):
-        res = call_app_data("style_tree", tree_file=str(showcase_tree),
-                            layout="rectilinear", tip_labels="show")
+        res = call_app_data(
+            "style_tree", tree_file=str(showcase_tree), layout="rectilinear", tip_labels="show"
+        )
         assert res["ok"] is True
         assert res["summary"]["tips"] == 700
 
     def test_style_gtdb_phylum(self, call_app_data, ar53_phylum_tree, gtdb_dir):
-        res = call_app_data("style_tree", tree_file=str(ar53_phylum_tree),
-                            collapse_rank="phylum", collapse_style="collapse")
+        res = call_app_data(
+            "style_tree",
+            tree_file=str(ar53_phylum_tree),
+            collapse_rank="phylum",
+            collapse_style="collapse",
+        )
         assert res["ok"] is True

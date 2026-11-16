@@ -132,7 +132,9 @@ class TestValidation:
 
     def test_operations_bad_collapse_type(self) -> None:
         with pytest.raises(ToolError):
-            ParamSpec(operations=[{"op": "collapse", "taxa": ["A"], "collapse_type": "fan"}]).validate()
+            ParamSpec(
+                operations=[{"op": "collapse", "taxa": ["A"], "collapse_type": "fan"}]
+            ).validate()
 
     def test_operations_bad_font_style(self) -> None:
         with pytest.raises(ToolError):
@@ -214,8 +216,9 @@ class TestToCliArgs:
         assert ["--selection-color", "#ff0000"] in _pairs(args)
 
     def test_rooting_transform_order(self) -> None:
-        args = ParamSpec(rooted=True, rooting_type="midpoint", transform="cladogram",
-                         order="increasing").to_cli_args()
+        args = ParamSpec(
+            rooted=True, rooting_type="midpoint", transform="cladogram", order="increasing"
+        ).to_cli_args()
         assert "--rooted" in args
         assert ["--rooting-type", "midpoint"] in _pairs(args)
         assert ["--transform", "cladogram"] in _pairs(args)
@@ -228,16 +231,23 @@ class TestToCliArgs:
         assert "--tip-labels-hide" in hide
 
     def test_font_flags(self) -> None:
-        args = ParamSpec(tip_label_font_name="Helvetica", tip_label_font_size=14,
-                         tip_label_font_style=2).to_cli_args()
+        args = ParamSpec(
+            tip_label_font_name="Helvetica", tip_label_font_size=14, tip_label_font_style=2
+        ).to_cli_args()
         assert ["--font-name", "Helvetica"] in _pairs(args)
         assert ["--font-size", "14"] in _pairs(args)
         assert ["--font-style", "2"] in _pairs(args)
-        assert ["--label-color", "#ff0000"] in _pairs(ParamSpec(label_color="#FF0000").to_cli_args())
+        assert ["--label-color", "#ff0000"] in _pairs(
+            ParamSpec(label_color="#FF0000").to_cli_args()
+        )
 
     def test_scale_axis_set_pairs(self) -> None:
-        args = ParamSpec(scale_axis="show", scale_axis_reverse=True,
-                         scale_axis_font_size=14, scale_axis_significant_digits=2).to_cli_args()
+        args = ParamSpec(
+            scale_axis="show",
+            scale_axis_reverse=True,
+            scale_axis_font_size=14,
+            scale_axis_significant_digits=2,
+        ).to_cli_args()
         assert "--scale-axis-show" in args
         assert "--set" in args
         assert "scaleAxis.reverseAxis=true" in args
@@ -245,8 +255,9 @@ class TestToCliArgs:
         assert "scaleAxis.significantDigits=2" in args
 
     def test_polar_angular(self) -> None:
-        args = ParamSpec(polar_angular_range_degrees=180,
-                         polar_root_angle_degrees=270).to_cli_args()
+        args = ParamSpec(
+            polar_angular_range_degrees=180, polar_root_angle_degrees=270
+        ).to_cli_args()
         assert ["--angular-range", "180"] in _pairs(args)
         assert ["--root-angle", "270"] in _pairs(args)
 
@@ -274,9 +285,9 @@ class TestToCliArgs:
         assert ["--collapse-rank", "class"] in _pairs(args)
 
     def test_taxonomy_context(self) -> None:
-        args = ParamSpec(taxonomy_levels="d:domain,p:phylum",
-                         taxonomy_mapping_file="/m/x.tsv",
-                         table_sep="\t").to_cli_args()
+        args = ParamSpec(
+            taxonomy_levels="d:domain,p:phylum", taxonomy_mapping_file="/m/x.tsv", table_sep="\t"
+        ).to_cli_args()
         assert ["--taxonomy-levels", "d:domain,p:phylum"] in _pairs(args)
         assert ["--taxonomy-mapping-file", "/m/x.tsv"] in _pairs(args)
         assert ["--table-sep", "\t"] in _pairs(args)
@@ -289,7 +300,9 @@ class TestToCliArgs:
         assert ["--highlight", "A,B:#FF0000:3"] in _pairs(args)
 
     def test_op_color(self) -> None:
-        args = ParamSpec(operations=[{"op": "color", "taxa": ["C"], "color": "#2196F3"}]).to_cli_args()
+        args = ParamSpec(
+            operations=[{"op": "color", "taxa": ["C"], "color": "#2196F3"}]
+        ).to_cli_args()
         assert ["--color-clade", "C:#2196F3"] in _pairs(args)
 
     def test_op_color_all(self) -> None:
@@ -301,10 +314,12 @@ class TestToCliArgs:
 
     def test_op_color_all_global_flag_emitted_once(self) -> None:
         # --color-all is a global CLI switch: never one flag per operation.
-        args = ParamSpec(operations=[
-            {"op": "color_all", "taxa": ["D"], "color": "#00FF00"},
-            {"op": "color_all", "taxa": ["E"], "color": "#0000FF"},
-        ]).to_cli_args()
+        args = ParamSpec(
+            operations=[
+                {"op": "color_all", "taxa": ["D"], "color": "#00FF00"},
+                {"op": "color_all", "taxa": ["E"], "color": "#0000FF"},
+            ]
+        ).to_cli_args()
         assert args.count("--color-all") == 1
         assert ["--color-clade", "D:#00FF00"] in _pairs(args)
         assert ["--color-clade", "E:#0000FF"] in _pairs(args)
@@ -318,22 +333,41 @@ class TestToCliArgs:
         assert "--collapse-taxa" not in args
 
     def test_op_collapse_group_extras_use_resolved_taxa(self) -> None:
-        args = ParamSpec(operations=[{
-            "op": "collapse_group", "group": "Phy1", "taxa": ["A", "B"],
-            "label": "X", "collapse_type": "cartoon",
-        }]).to_cli_args()
+        args = ParamSpec(
+            operations=[
+                {
+                    "op": "collapse_group",
+                    "group": "Phy1",
+                    "taxa": ["A", "B"],
+                    "label": "X",
+                    "collapse_type": "cartoon",
+                }
+            ]
+        ).to_cli_args()
         assert ["--collapse-taxa", "A,B,label=X,type=cartoon"] in _pairs(args)
         assert "--clade" not in args
 
     def test_op_highlight_offset_is_int_and_keeps_width_slot(self) -> None:
-        args = ParamSpec(operations=[{
-            "op": "highlight", "taxa": ["A", "B"], "offset": 2,
-        }]).to_cli_args()
+        args = ParamSpec(
+            operations=[
+                {
+                    "op": "highlight",
+                    "taxa": ["A", "B"],
+                    "offset": 2,
+                }
+            ]
+        ).to_cli_args()
         # color + width slots are mandatory before the offset slot.
         assert ["--highlight", "A,B:#804548:4:2"] in _pairs(args)
-        args = ParamSpec(operations=[{
-            "op": "highlight", "taxa": ["A"], "width": 1.5,
-        }]).to_cli_args()
+        args = ParamSpec(
+            operations=[
+                {
+                    "op": "highlight",
+                    "taxa": ["A"],
+                    "width": 1.5,
+                }
+            ]
+        ).to_cli_args()
         assert ["--highlight", "A:#804548:1.5"] in _pairs(args)
 
     def test_legend_hide_uses_set(self) -> None:
@@ -353,19 +387,30 @@ class TestToCliArgs:
 
     def test_op_font(self) -> None:
         args = ParamSpec(
-            operations=[{"op": "font", "taxa": ["E"], "font_name": "Arial",
-                         "font_style": 1, "font_size": 14}]
+            operations=[
+                {
+                    "op": "font",
+                    "taxa": ["E"],
+                    "font_name": "Arial",
+                    "font_style": 1,
+                    "font_size": 14,
+                }
+            ]
         ).to_cli_args()
         assert ["--font-clade", "E:Arial-BOLD-14"] in _pairs(args)
 
     def test_op_collapse(self) -> None:
-        args = ParamSpec(operations=[{"op": "collapse", "taxa": ["A", "B"],
-                                      "label": "AB", "collapse_type": "cartoon"}]).to_cli_args()
+        args = ParamSpec(
+            operations=[
+                {"op": "collapse", "taxa": ["A", "B"], "label": "AB", "collapse_type": "cartoon"}
+            ]
+        ).to_cli_args()
         assert ["--collapse-taxa", "A,B,label=AB,type=cartoon"] in _pairs(args)
 
     def test_op_collapse_rank(self) -> None:
-        args = ParamSpec(operations=[{"op": "collapse_rank", "rank": "class",
-                                      "collapse_style": "cartoon"}]).to_cli_args()
+        args = ParamSpec(
+            operations=[{"op": "collapse_rank", "rank": "class", "collapse_style": "cartoon"}]
+        ).to_cli_args()
         assert ["--collapse-rank", "class"] in _pairs(args)
         assert ["--collapse-style", "cartoon"] in _pairs(args)
 
@@ -418,15 +463,17 @@ class TestToConfigDict:
         assert cfg["trees.orderType"] == "Decreasing Node Density"
 
     def test_appearance(self) -> None:
-        cfg = ParamSpec(background_color="#FAFAFA", branch_width=3.0,
-                        branch_color_attribute="!color").to_config_dict()
+        cfg = ParamSpec(
+            background_color="#FAFAFA", branch_width=3.0, branch_color_attribute="!color"
+        ).to_config_dict()
         assert cfg["appearance.backgroundColour"] == "#fafafa"
         assert cfg["appearance.branchLineWidth"] == 3.0
         assert cfg["appearance.branchColorAttribute"] == "!color"
 
     def test_tip_labels(self) -> None:
-        cfg = ParamSpec(tip_labels="hide", tip_label_font_size=14,
-                        label_color="#212121").to_config_dict()
+        cfg = ParamSpec(
+            tip_labels="hide", tip_label_font_size=14, label_color="#212121"
+        ).to_config_dict()
         assert cfg["tipLabels.isShown"] is False
         assert cfg["tipLabels.fontSize"] == 14
         assert cfg["tipLabels.colorAttribute"] == "#212121"
@@ -438,8 +485,12 @@ class TestToConfigDict:
         assert cfg["rectilinearLayout.alignTipLabels"] is True
 
     def test_scale_axis(self) -> None:
-        cfg = ParamSpec(scale_axis_reverse=True, scale_axis_font_size=14,
-                        scale_axis_significant_digits=2, root_age=10.0).to_config_dict()
+        cfg = ParamSpec(
+            scale_axis_reverse=True,
+            scale_axis_font_size=14,
+            scale_axis_significant_digits=2,
+            root_age=10.0,
+        ).to_config_dict()
         assert cfg["scaleAxis.reverseAxis"] is True
         assert cfg["scaleAxis.fontSize"] == 14
         assert cfg["scaleAxis.significantDigits"] == 2
@@ -490,8 +541,15 @@ class TestMisc:
         assert MULTI_TREE_MODES == ("first", "last", "random", "split", "all", "ask")
 
     def test_error_codes_include_used_ones(self) -> None:
-        for code in ("invalid_argument", "access_denied", "validation_failed",
-                     "monophyly_error", "render_timeout", "java_missing", "jar_missing"):
+        for code in (
+            "invalid_argument",
+            "access_denied",
+            "validation_failed",
+            "monophyly_error",
+            "render_timeout",
+            "java_missing",
+            "jar_missing",
+        ):
             assert code in ERROR_CODES
 
     def test_config_json_serialisable(self) -> None:

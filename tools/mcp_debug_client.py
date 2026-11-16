@@ -31,6 +31,7 @@ Usage::
 Exit codes: 0 = success, 1 = tool returned ``isError`` / client failure,
 2 = usage error or missing dependency.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -53,13 +54,11 @@ try:  # pragma: no cover - exercised by running the script
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
 except ModuleNotFoundError as exc:  # pragma: no cover
-    print(f"[FAIL] missing dependency {exc.name!r}; run bash scripts/setup_env.sh",
-          file=sys.stderr)
+    print(f"[FAIL] missing dependency {exc.name!r}; run bash scripts/setup_env.sh", file=sys.stderr)
     raise SystemExit(2) from exc
 
-_DEFAULT_WORKSPACE = (
-    os.environ.get("FIGTREEKIT_MCP_WORKSPACE")
-    or str(_ROOT / "figtreekit-mcp-workspace")
+_DEFAULT_WORKSPACE = os.environ.get("FIGTREEKIT_MCP_WORKSPACE") or str(
+    _ROOT / "figtreekit-mcp-workspace"
 )
 
 
@@ -69,8 +68,7 @@ def _env_read_roots() -> List[str]:
 
 
 def _server_params(workspace_root: str, read_roots: List[str]) -> StdioServerParameters:
-    args = ["-m", "figtreekit_mcp", "--transport", "stdio",
-            "--workspace-root", workspace_root]
+    args = ["-m", "figtreekit_mcp", "--transport", "stdio", "--workspace-root", workspace_root]
     for root in read_roots:
         args += ["--allow-read-root", root]
 
@@ -94,25 +92,30 @@ async def _run() -> int:
     parser = argparse.ArgumentParser(
         prog="mcp_debug_client",
         description="stdio debug client: --call / --list-tools / "
-                    "--read-resource / --dump-schema / --prompt",
+        "--read-resource / --dump-schema / --prompt",
     )
-    parser.add_argument("--call", nargs=2, metavar=("TOOL", "JSON"),
-                        help="call a tool with JSON arguments")
+    parser.add_argument(
+        "--call", nargs=2, metavar=("TOOL", "JSON"), help="call a tool with JSON arguments"
+    )
     parser.add_argument("--list-tools", action="store_true", help="list all tools")
     parser.add_argument("--read-resource", metavar="URI", help="read a resource")
-    parser.add_argument("--dump-schema", action="store_true",
-                        help="dump every tool's JSON Schema")
+    parser.add_argument("--dump-schema", action="store_true", help="dump every tool's JSON Schema")
     parser.add_argument("--prompt", metavar="NAME", help="fetch a prompt")
-    parser.add_argument("--workspace-root", default=_DEFAULT_WORKSPACE,
-                        help="writable workspace (default: $FIGTREEKIT_MCP_WORKSPACE "
-                             "or <repo>/figtreekit-mcp-workspace)")
-    parser.add_argument("--allow-read-root", action="append", default=None,
-                        help="read-only whitelist root (repeatable; default: "
-                             "$FIGTREEKIT_MCP_READ_ROOTS)")
+    parser.add_argument(
+        "--workspace-root",
+        default=_DEFAULT_WORKSPACE,
+        help="writable workspace (default: $FIGTREEKIT_MCP_WORKSPACE "
+        "or <repo>/figtreekit-mcp-workspace)",
+    )
+    parser.add_argument(
+        "--allow-read-root",
+        action="append",
+        default=None,
+        help="read-only whitelist root (repeatable; default: $FIGTREEKIT_MCP_READ_ROOTS)",
+    )
     args = parser.parse_args()
 
-    if not (args.call or args.list_tools or args.read_resource or
-            args.dump_schema or args.prompt):
+    if not (args.call or args.list_tools or args.read_resource or args.dump_schema or args.prompt):
         parser.print_help()
         return 2
 
@@ -157,11 +160,16 @@ async def _run() -> int:
                     print(f"[usage] invalid JSON arguments: {exc}", file=sys.stderr)
                     return 2
                 result = await session.call_tool(tool_name, call_args)
-                print(json.dumps(
-                    {"isError": result.isError,
-                     "content": [content.text for content in result.content]},
-                    indent=2, ensure_ascii=False,
-                ))
+                print(
+                    json.dumps(
+                        {
+                            "isError": result.isError,
+                            "content": [content.text for content in result.content],
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                    )
+                )
                 return 1 if result.isError else 0
     return 0
 

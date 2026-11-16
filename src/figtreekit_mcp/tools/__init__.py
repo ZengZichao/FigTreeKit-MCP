@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import inspect
 import itertools
-import json
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
 from mcp.server.fastmcp import Context
 
@@ -47,7 +46,9 @@ def get_app(ctx: Context) -> "AppContext":
     lctx = getattr(ctx, "request_context", None)
     app = getattr(lctx, "lifespan_context", None) if lctx is not None else None
     if app is None:
-        raise ToolError("internal_error", "缺少服务器上下文（lifespan 未初始化）", error_key="no_app_context")
+        raise ToolError(
+            "internal_error", "缺少服务器上下文（lifespan 未初始化）", error_key="no_app_context"
+        )
     return app
 
 
@@ -149,8 +150,16 @@ def tree_summary(styler: Any) -> Dict[str, object]:
         tree = styler.parse_tree()
         if tree is not None:
             tips = len(tree.get_terminals())
-            internals = len(tree.get_nonterminals()) if hasattr(tree, "get_nonterminals") else max(0, tips - 1)
-            rooted = bool(getattr(tree, "rooted", None)) if getattr(tree, "rooted", None) is not None else None
+            internals = (
+                len(tree.get_nonterminals())
+                if hasattr(tree, "get_nonterminals")
+                else max(0, tips - 1)
+            )
+            rooted = (
+                bool(getattr(tree, "rooted", None))
+                if getattr(tree, "rooted", None) is not None
+                else None
+            )
     layout = styler.get_settings().get("layout.layoutType", "RECTILINEAR")
     return {
         "tips": tips,
@@ -181,6 +190,15 @@ def export_nexus_file(
 
 
 # Re-export commonly used values for tool modules.
-__all__ = ["TOOLS", "tool", "get_app", "require_run", "get_run_dir",
-           "resolve_mapping_file", "progress", "nexus_artifact",
-           "tree_summary", "export_nexus_file"]
+__all__ = [
+    "TOOLS",
+    "tool",
+    "get_app",
+    "require_run",
+    "get_run_dir",
+    "resolve_mapping_file",
+    "progress",
+    "nexus_artifact",
+    "tree_summary",
+    "export_nexus_file",
+]

@@ -27,10 +27,14 @@ def _java_ready() -> bool:
 
 def _fake_render_deps(monkeypatch, jar: str = "fake.jar") -> None:
     """Patch dependency probes so validation/output tests need no JVM."""
-    monkeypatch.setattr(render_tools, "probe_java", lambda: {
-        "ok": True, "version": "17.x", "message": "", "hints": []})
-    monkeypatch.setattr(render_tools, "probe_jar", lambda *a, **k: {
-        "ok": True, "path": jar, "hints": []})
+    monkeypatch.setattr(
+        render_tools,
+        "probe_java",
+        lambda: {"ok": True, "version": "17.x", "message": "", "hints": []},
+    )
+    monkeypatch.setattr(
+        render_tools, "probe_jar", lambda *a, **k: {"ok": True, "path": jar, "hints": []}
+    )
 
 
 def _fake_render(monkeypatch, captured: dict) -> None:
@@ -87,8 +91,9 @@ class TestRenderOutputMetadata:
         app.render_timeout = 321
         captured: dict = {}
         _fake_render(monkeypatch, captured)
-        res = call_app("render_tree", ctx, tree_content=SMALL_TREE, format="PNG",
-                       width=600, height=400)
+        res = call_app(
+            "render_tree", ctx, tree_content=SMALL_TREE, format="PNG", width=600, height=400
+        )
         cmd = res["cli_command"]
         assert "--figtree-jar" in cmd
         assert " --render " in cmd
@@ -109,8 +114,7 @@ class TestRenderOutputMetadata:
     def test_colour_post_processing_not_reproducible(self, app, ctx, monkeypatch):
         _fake_render_deps(monkeypatch)
         _fake_render(monkeypatch, {})
-        res = call_app("render_tree", ctx, tree_content=SMALL_TREE,
-                       background_color="#FFFFFF")
+        res = call_app("render_tree", ctx, tree_content=SMALL_TREE, background_color="#FFFFFF")
         assert res["ok"] is True
         assert res["reproducible"] is False
         assert res["warnings"]
@@ -132,8 +136,7 @@ class TestRenderTreeReal:
     def test_render_png(self, call, app):
         # If no jar is available this raises jar_missing; otherwise renders.
         try:
-            res = call("render_tree", tree_content=SMALL_TREE, format="PNG",
-                       width=600, height=400)
+            res = call("render_tree", tree_content=SMALL_TREE, format="PNG", width=600, height=400)
         except ToolError as exc:
             assert exc.code == "jar_missing"
             return
@@ -146,8 +149,7 @@ class TestRenderTreeReal:
     @pytest.mark.skipif(not _java_ready(), reason="Java 不可用，跳过真实渲染")
     def test_render_svg(self, call, app):
         try:
-            res = call("render_tree", tree_content=SMALL_TREE, format="SVG",
-                       width=600, height=400)
+            res = call("render_tree", tree_content=SMALL_TREE, format="SVG", width=600, height=400)
         except ToolError as exc:
             assert exc.code == "jar_missing"
             return

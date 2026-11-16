@@ -94,8 +94,7 @@ class TestValidateTree:
         # ``taxonomy_levels`` never influenced deep validation (no taxonomy
         # parsing happens there), so it is no longer part of the T04 contract.
         with pytest.raises(TypeError):
-            call("validate_tree", tree_content=SMALL_TREE,
-                 taxonomy_levels="p:phylum")
+            call("validate_tree", tree_content=SMALL_TREE, taxonomy_levels="p:phylum")
 
 
 # --------------------------------------------------------------------------- #
@@ -187,8 +186,7 @@ class TestCrossValidate:
     def test_mismatch_non_strict_ok(self, call, reads_dir):
         seq = reads_dir / "seq.fasta"
         seq.write_text(MISMATCH_FASTA, encoding="utf-8")
-        res = call("cross_validate", tree_content=CROSS_TREE,
-                   sequences_file=str(seq), strict=False)
+        res = call("cross_validate", tree_content=CROSS_TREE, sequences_file=str(seq), strict=False)
         assert res["ok"] is True
         assert res["valid"] is False
         assert res["matched"] == 0
@@ -204,8 +202,7 @@ class TestCrossValidate:
         seq = reads_dir / "seq.fastq"
         seq.write_text(FASTQ_DNA, encoding="utf-8")
         # FASTQ ids are read1/read2.
-        res = call("cross_validate", tree_content="(read1:1,read2:1);",
-                   sequences_file=str(seq))
+        res = call("cross_validate", tree_content="(read1:1,read2:1);", sequences_file=str(seq))
         assert res["ok"] is True
         assert res["matched"] == 2
 

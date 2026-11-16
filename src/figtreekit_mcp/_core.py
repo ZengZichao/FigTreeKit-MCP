@@ -31,6 +31,7 @@ from ._workspace import Workspace
 
 _log = get_logger()
 
+
 # --------------------------------------------------------------------------- #
 # Tree source
 # --------------------------------------------------------------------------- #
@@ -99,20 +100,29 @@ def resolve_tree_source(
     if tree_content is not None:
         workspace.check_content_size(tree_content)
         _scan_anomalous(tree_content, label="tree_content")
-        return tree_content, TreeNode(source="content", size_bytes=len(tree_content.encode("utf-8")),
-                                      format=detect_format(tree_content))
+        return tree_content, TreeNode(
+            source="content",
+            size_bytes=len(tree_content.encode("utf-8")),
+            format=detect_format(tree_content),
+        )
 
     path = workspace.assert_readable(tree_file)
     workspace.check_file_size(path)
     try:
         content, warns = figtreekit.read_text_with_fallback(str(path), label=path.name)
     except figtreekit.ValidationError as exc:
-        raise ToolError("tree_parse_error", f"无法读取树文件：{exc}", error_key="read_failed") from exc
+        raise ToolError(
+            "tree_parse_error", f"无法读取树文件：{exc}", error_key="read_failed"
+        ) from exc
     for w in warns:
         warnings.warn(w, figtreekit.CompatibilityWarning)
     _scan_anomalous(content, label=path.name)
-    return content, TreeNode(source="file", path=str(path), size_bytes=path.stat().st_size,
-                             format=detect_format(content, path.name))
+    return content, TreeNode(
+        source="file",
+        path=str(path),
+        size_bytes=path.stat().st_size,
+        format=detect_format(content, path.name),
+    )
 
 
 def _scan_anomalous(content: str, label: str) -> None:
@@ -174,7 +184,11 @@ def _parse_rank_spec(spec: str) -> Dict[str, str]:
         prefix = prefix.strip()
         rank = rank.strip()
         if not prefix or not rank:
-            raise ToolError("invalid_argument", f"taxonomy_levels 条目为空：'{part}'", error_key="bad_taxonomy_spec")
+            raise ToolError(
+                "invalid_argument",
+                f"taxonomy_levels 条目为空：'{part}'",
+                error_key="bad_taxonomy_spec",
+            )
         mapping[prefix] = rank
     return mapping
 
@@ -194,8 +208,13 @@ class StyleResult:
     warnings: List[str] = field(default_factory=list)
 
 
-def select_tree_index(content: str, *, multi_tree: Optional[str] = None,
-                      tree_index: Optional[int] = None, seed: Optional[int] = None) -> tuple[int, int, str]:
+def select_tree_index(
+    content: str,
+    *,
+    multi_tree: Optional[str] = None,
+    tree_index: Optional[int] = None,
+    seed: Optional[int] = None,
+) -> tuple[int, int, str]:
     """Decide which tree of a multi-tree Nexus to process.
 
     Returns ``(tree_count, selected_index, hint)``.  ``multi_tree`` and
@@ -227,8 +246,12 @@ def select_tree_index(content: str, *, multi_tree: Optional[str] = None,
         )
 
     if tree_index is not None:
-        if (not isinstance(tree_index, int) or isinstance(tree_index, bool)
-                or tree_index < 0 or tree_index >= tree_count):
+        if (
+            not isinstance(tree_index, int)
+            or isinstance(tree_index, bool)
+            or tree_index < 0
+            or tree_index >= tree_count
+        ):
             raise ToolError(
                 "invalid_argument",
                 f"tree_index={tree_index} 超出范围 0..{tree_count - 1}",
@@ -325,9 +348,11 @@ def _make_styler_impl(
     tax_kwargs: Dict[str, Any] = {}
     if taxonomy_delimiter_mode is not None:
         if taxonomy_delimiter_mode not in ("reverse", "greedy", "segment"):
-            raise ToolError("invalid_argument",
-                            f"taxonomy_delimiter_mode 必须是 reverse|greedy|segment，得到 '{taxonomy_delimiter_mode}'",
-                            error_key="bad_delimiter_mode")
+            raise ToolError(
+                "invalid_argument",
+                f"taxonomy_delimiter_mode 必须是 reverse|greedy|segment，得到 '{taxonomy_delimiter_mode}'",
+                error_key="bad_delimiter_mode",
+            )
         tax_kwargs["delimiter_mode"] = taxonomy_delimiter_mode
 
     if table_sep is not None:
@@ -338,9 +363,11 @@ def _make_styler_impl(
         tax_kwargs["file_delimiter"] = table_sep
     if taxonomy_source_priority is not None:
         if taxonomy_source_priority not in ("embedded", "table"):
-            raise ToolError("invalid_argument",
-                            f"taxonomy_source_priority 必须是 embedded|table，得到 '{taxonomy_source_priority}'",
-                            error_key="bad_source_priority")
+            raise ToolError(
+                "invalid_argument",
+                f"taxonomy_source_priority 必须是 embedded|table，得到 '{taxonomy_source_priority}'",
+                error_key="bad_source_priority",
+            )
         tax_kwargs["source_priority"] = taxonomy_source_priority
     if ignore_malformed is not None:
         tax_kwargs["ignore_malformed"] = ignore_malformed
@@ -493,9 +520,7 @@ def collapse_monophyletic_groups(
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             try:
-                styler.collapse_by_group(
-                    group_name, collapse_type=collapse_style, label=label_arg
-                )
+                styler.collapse_by_group(group_name, collapse_type=collapse_style, label=label_arg)
                 fully_applied = True
             except figtreekit.ValidationError as exc:
                 if strict:
@@ -506,9 +531,15 @@ def collapse_monophyletic_groups(
                         error_detail=str(exc),
                     ) from exc
                 fully_applied = False
-                records.append({"op": "collapse_rank", "group": group_name,
-                                "taxa_count": len(taxa), "status": "skipped",
-                                "reason": str(exc)})
+                records.append(
+                    {
+                        "op": "collapse_rank",
+                        "group": group_name,
+                        "taxa_count": len(taxa),
+                        "status": "skipped",
+                        "reason": str(exc),
+                    }
+                )
             compat = [x for x in caught if issubclass(x.category, figtreekit.CompatibilityWarning)]
             if compat:
                 msg = str(compat[0].message)
@@ -520,9 +551,15 @@ def collapse_monophyletic_groups(
                         error_detail=msg,
                     )
                 fully_applied = False
-                records.append({"op": "collapse_rank", "group": group_name,
-                                "taxa_count": len(taxa), "status": "skipped",
-                                "reason": msg})
+                records.append(
+                    {
+                        "op": "collapse_rank",
+                        "group": group_name,
+                        "taxa_count": len(taxa),
+                        "status": "skipped",
+                        "reason": msg,
+                    }
+                )
         if fully_applied:
             # CLI parity post-color (figtreekit._cli --collapse-rank Step 3):
             # read the ACTUAL target_taxa that collapse_by_group resolved and
@@ -532,18 +569,34 @@ def collapse_monophyletic_groups(
                 actual_taxa = styler._settings._collapses[-1].target_taxa
                 if actual_taxa:
                     parent_phylum = _find_parent_phylum(actual_taxa, phylum_taxa_sets)
-                    clade_color = color_map.get(parent_phylum, "#999999") if parent_phylum else "#999999"
+                    clade_color = (
+                        color_map.get(parent_phylum, "#999999") if parent_phylum else "#999999"
+                    )
                     try:
                         styler.set_clade_color_all(taxon_names=actual_taxa, color=clade_color)
                     except Exception:  # noqa: BLE001 - best-effort post-color
                         pass
-            records.append({"op": "collapse_rank", "group": group_name,
-                            "taxa_count": len(taxa), "status": "applied"})
+            records.append(
+                {
+                    "op": "collapse_rank",
+                    "group": group_name,
+                    "taxa_count": len(taxa),
+                    "status": "applied",
+                }
+            )
     return records
 
 
-_ANALYSIS_RANKS = ("domain", "superphylum", "phylum", "class",
-                   "order", "family", "genus", "species")
+_ANALYSIS_RANKS = (
+    "domain",
+    "superphylum",
+    "phylum",
+    "class",
+    "order",
+    "family",
+    "genus",
+    "species",
+)
 
 
 def resolve_group_taxa(styler: FigTreeStyler, group_name: str) -> List[str]:

@@ -11,8 +11,6 @@ unless testing the error envelope.
 
 from __future__ import annotations
 
-import time
-from pathlib import Path
 
 import pytest
 
@@ -120,9 +118,7 @@ class TestSetupFigTree:
         assert "jar_path" in res
         assert {"java_ok", "jar_ok", "render_ready", "hints"} <= set(res)
 
-    def test_explicit_whitelisted_jar_skips_compile(
-        self, call, app, reads_dir, monkeypatch
-    ):
+    def test_explicit_whitelisted_jar_skips_compile(self, call, app, reads_dir, monkeypatch):
         jar = reads_dir / "custom.jar"
         jar.write_bytes(b"fake-jar")
 
@@ -136,8 +132,11 @@ class TestSetupFigTree:
         assert any("使用已有" in line for line in res["status"])
 
     def test_auto_detected_jar_skips_compile(self, call, monkeypatch):
-        monkeypatch.setattr(environment_tools, "probe_jar", lambda *a, **k: {
-            "ok": True, "path": "/bundled/figtree.jar", "hints": []})
+        monkeypatch.setattr(
+            environment_tools,
+            "probe_jar",
+            lambda *a, **k: {"ok": True, "path": "/bundled/figtree.jar", "hints": []},
+        )
 
         def _fail_setup(*a, **k):
             raise AssertionError("bundled jar must not trigger download/compile")
@@ -155,8 +154,9 @@ class TestSetupFigTree:
         assert ei.value.code == "access_denied"
 
     def test_setup_timeout_guards_compile(self, call, app, monkeypatch):
-        monkeypatch.setattr(environment_tools, "probe_jar", lambda *a, **k: {
-            "ok": False, "path": None, "hints": []})
+        monkeypatch.setattr(
+            environment_tools, "probe_jar", lambda *a, **k: {"ok": False, "path": None, "hints": []}
+        )
 
         def _timeout(*a, **k):
             raise environment_tools.subprocess.TimeoutExpired(cmd="figtreekit-setup", timeout=1)

@@ -63,7 +63,8 @@ class TestOutputRewriteAndShell:
     def test_sec4_output_rewritten_into_run(self, app: Any, ctx: Any) -> None:
         """SEC-4: ``-o /tmp/x.nex`` is rewritten into the run dir and disclosed."""
         res = call_app(
-            "run_figtreekit_cli", ctx,
+            "run_figtreekit_cli",
+            ctx,
             argv=["<input>", "--layout", "polar", "-o", "/tmp/x.nex", "--force"],
             tree_content=SMALL_TREE,
         )
@@ -75,14 +76,12 @@ class TestOutputRewriteAndShell:
         for a in res["artifacts"]:
             assert "run_" in a["relative"]
 
-    def test_sec4_relative_escape_contained(
-        self, app: Any, ctx: Any, tmp_path: Path
-    ) -> None:
+    def test_sec4_relative_escape_contained(self, app: Any, ctx: Any, tmp_path: Path) -> None:
         """SEC-4: ``-o ../../escaped.nex`` cannot write outside the workspace."""
         res = call_app(
-            "run_figtreekit_cli", ctx,
-            argv=["<input>", "--layout", "polar", "-o", "../../escaped.nex",
-                  "--force"],
+            "run_figtreekit_cli",
+            ctx,
+            argv=["<input>", "--layout", "polar", "-o", "../../escaped.nex", "--force"],
             tree_content=SMALL_TREE,
         )
         assert res["ok"] is True
@@ -96,13 +95,17 @@ class TestOutputRewriteAndShell:
         marker = "/tmp/figtreekit-mcp-sec7-marker"
         if Path(marker).exists():
             Path(marker).unlink()
-        for evil in ("; touch " + marker, "$(touch " + marker + ")",
-                     "|touch " + marker, "&&touch " + marker):
+        for evil in (
+            "; touch " + marker,
+            "$(touch " + marker + ")",
+            "|touch " + marker,
+            "&&touch " + marker,
+        ):
             try:
                 call_app(
-                    "run_figtreekit_cli", ctx,
-                    argv=["<input>", "--layout", "polar", "-o", "/tmp/x.nex",
-                          "--force", evil],
+                    "run_figtreekit_cli",
+                    ctx,
+                    argv=["<input>", "--layout", "polar", "-o", "/tmp/x.nex", "--force", evil],
                     tree_content=SMALL_TREE,
                 )
             except ToolError:
@@ -116,7 +119,7 @@ class TestOutputRewriteAndShell:
 class TestContentSafety:
     def test_sec5_null_and_bidi_rejected(self, app: Any, ctx: Any) -> None:
         """SEC-5: control char ``\\x00`` and bidi override ``\\u202E``."""
-        for evil in ("(((A:1,B:1):1,C:2)\x00);", "((A:1,B:1)\u202E);"):
+        for evil in ("(((A:1,B:1):1,C:2)\x00);", "((A:1,B:1)\u202e);"):
             with pytest.raises(ToolError) as ei:
                 call_app("validate_tree", ctx, tree_content=evil)
             assert ei.value.code == "anomalous_content"
@@ -140,8 +143,13 @@ class TestConcurrency:
         def style_work() -> None:
             try:
                 ctx = _fake_ctx(app)
-                res = call_app("style_tree", ctx, tree_content=SMALL_TREE, layout="polar",
-                               operations=[{"op": "highlight", "taxa": ["A", "B"], "color": "#FF0000"}])
+                res = call_app(
+                    "style_tree",
+                    ctx,
+                    tree_content=SMALL_TREE,
+                    layout="polar",
+                    operations=[{"op": "highlight", "taxa": ["A", "B"], "color": "#FF0000"}],
+                )
                 with lock:
                     results.append(res)
             except Exception as exc:  # noqa: BLE001
@@ -181,9 +189,16 @@ class TestRenderDependencies:
     def test_sec10_no_java_gives_java_missing(self, app: Any, ctx: Any, monkeypatch: Any) -> None:
         """SEC-10: probe_java reports missing → java_missing guidance."""
         # Patch the names *bound inside* render.py (imported at module load).
-        monkeypatch.setattr(render_tools, "probe_java", lambda: {
-            "ok": False, "version": "", "message": "java not found",
-            "hints": ["Java 8+ 未安装。请安装 JDK/JRE 8+。"]})
+        monkeypatch.setattr(
+            render_tools,
+            "probe_java",
+            lambda: {
+                "ok": False,
+                "version": "",
+                "message": "java not found",
+                "hints": ["Java 8+ 未安装。请安装 JDK/JRE 8+。"],
+            },
+        )
         with pytest.raises(ToolError) as ei:
             call_app("render_tree", ctx, tree_content=SMALL_TREE, format="PNG")
         assert ei.value.code == "java_missing"
@@ -191,11 +206,20 @@ class TestRenderDependencies:
 
     def test_sec11_no_jar_gives_jar_missing(self, app: Any, ctx: Any, monkeypatch: Any) -> None:
         """SEC-11: java present but JAR missing → jar_missing + setup hint."""
-        monkeypatch.setattr(render_tools, "probe_java", lambda: {
-            "ok": True, "version": "8.x", "message": "", "hints": []})
-        monkeypatch.setattr(render_tools, "probe_jar", lambda *a, **k: {
-            "ok": False, "path": None,
-            "hints": ["figtree_patched.jar 未找到。运行 setup_figtree 安装。"]})
+        monkeypatch.setattr(
+            render_tools,
+            "probe_java",
+            lambda: {"ok": True, "version": "8.x", "message": "", "hints": []},
+        )
+        monkeypatch.setattr(
+            render_tools,
+            "probe_jar",
+            lambda *a, **k: {
+                "ok": False,
+                "path": None,
+                "hints": ["figtree_patched.jar 未找到。运行 setup_figtree 安装。"],
+            },
+        )
         with pytest.raises(ToolError) as ei:
             call_app("render_tree", ctx, tree_content=SMALL_TREE, format="PNG")
         assert ei.value.code == "jar_missing"
@@ -228,8 +252,15 @@ class TestRenderDependencies:
 
         monkeypatch.setattr(render_mod.figtreekit, "render_with_figtree", _timeout)
         with pytest.raises(ToolError) as ei:
-            call_app("render_tree", ctx, tree_content=SMALL_TREE, format="PNG",
-                     width=300, height=200, timeout=1)
+            call_app(
+                "render_tree",
+                ctx,
+                tree_content=SMALL_TREE,
+                format="PNG",
+                width=300,
+                height=200,
+                timeout=1,
+            )
         assert ei.value.code == "render_timeout"
 
 

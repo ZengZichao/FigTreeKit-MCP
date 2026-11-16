@@ -22,6 +22,7 @@ Usage (from the repository root)::
 Exit codes: 0 = success (including ``--style-only``), 1 = styling/render
 failure, 2 = usage error / missing input / missing dependency.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -84,14 +85,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--tree",
         default=os.environ.get("FIGTREEKIT_MCP_TREE"),
-        help="Newick/Nexus tree file (default: built-in 12-tip tree; "
-             "env: FIGTREEKIT_MCP_TREE)",
+        help="Newick/Nexus tree file (default: built-in 12-tip tree; env: FIGTREEKIT_MCP_TREE)",
     )
     parser.add_argument(
         "--mapping",
         default=os.environ.get("FIGTREEKIT_MCP_MAPPING"),
         help="Optional taxonomy mapping table (TSV/CSV); only needed when "
-             "tip labels carry no taxonomy (env: FIGTREEKIT_MCP_MAPPING)",
+        "tip labels carry no taxonomy (env: FIGTREEKIT_MCP_MAPPING)",
     )
     parser.add_argument(
         "--style-only",
@@ -102,7 +102,7 @@ def _parser() -> argparse.ArgumentParser:
         "--workspace",
         default=os.environ.get("FIGTREEKIT_MCP_WORKSPACE"),
         help="Writable workspace directory (default: a temporary directory; "
-             "env: FIGTREEKIT_MCP_WORKSPACE)",
+        "env: FIGTREEKIT_MCP_WORKSPACE)",
     )
     return parser
 
@@ -116,11 +116,13 @@ def _resolve_workspace(value: Optional[str]) -> str:
 
 
 def _make_ctx(workspace: str, read_roots: List[str]) -> _FakeCtx:
-    create_server({
-        "workspace_root": workspace,
-        "read_roots": read_roots,
-        "jar": None,
-    })
+    create_server(
+        {
+            "workspace_root": workspace,
+            "read_roots": read_roots,
+            "jar": None,
+        }
+    )
     app = get_active_app()
     if app is None:  # pragma: no cover - defensive
         raise RuntimeError("create_server() did not install an AppContext")
@@ -147,8 +149,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.mapping:
         mapping_path = Path(args.mapping).expanduser().resolve()
         if not mapping_path.is_file():
-            print(f"[FAIL] mapping file not found: {mapping_path}",
-                  file=sys.stderr)
+            print(f"[FAIL] mapping file not found: {mapping_path}", file=sys.stderr)
             return 2
 
     read_roots: List[str] = []
@@ -175,17 +176,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         ctx = _make_ctx(workspace, read_roots)
 
         summary = TOOLS["summarize_tree"](
-            ctx, **target, include_tip_labels=False,
+            ctx,
+            **target,
+            include_tip_labels=False,
         )
         stats = summary.get("statistics", {})
         print("== summarize_tree ==")
-        print(f"  tips={stats.get('tips')} "
-              f"tree_count={summary.get('tree_count')} "
-              f"format={summary.get('format')}")
+        print(
+            f"  tips={stats.get('tips')} "
+            f"tree_count={summary.get('tree_count')} "
+            f"format={summary.get('format')}"
+        )
 
         print("== style_tree (polar + class collapse/cartoon + phylum colors) ==")
         styled = TOOLS["style_tree"](
-            ctx, **target, **taxonomy_kwargs,
+            ctx,
+            **target,
+            **taxonomy_kwargs,
             layout="polar",
             auto_color_rank="phylum",
             tip_labels="hide",
@@ -195,18 +202,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             scale_axis_reverse=False,
             scale_axis_font_size=14,
             scale_axis_significant_digits=2,
-            operations=[{
-                "op": "collapse_rank",
-                "rank": "class",
-                "collapse_style": "cartoon",
-            }],
+            operations=[
+                {
+                    "op": "collapse_rank",
+                    "rank": "class",
+                    "collapse_style": "cartoon",
+                }
+            ],
         )
     except ToolError as exc:
         _print_error("styling failed", exc)
         return 1
     except Exception as exc:  # noqa: BLE001 - report, do not traceback
-        print(f"[FAIL] unexpected error: {type(exc).__name__}: {exc}",
-              file=sys.stderr)
+        print(f"[FAIL] unexpected error: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
     if not styled.get("ok"):
@@ -221,8 +229,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"  nexus_file={nexus}")
     print(f"  cli_command={styled.get('cli_command')}")
     for record in styled.get("operations_applied", []):
-        detail = ", ".join(f"{k}={v}" for k, v in record.items()
-                           if k not in ("op", "status"))
+        detail = ", ".join(f"{k}={v}" for k, v in record.items() if k not in ("op", "status"))
         suffix = f" ({detail})" if detail else ""
         print(f"  operation: {record.get('op')}={record.get('status')}{suffix}")
 
@@ -239,8 +246,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         for record in styled.get("operations_applied", [])
     )
     if collapse_applied and "!collapse" not in nexus_text and "!cartoon" not in nexus_text:
-        print("[FAIL] exported Nexus has no !collapse/!cartoon annotations",
-              file=sys.stderr)
+        print("[FAIL] exported Nexus has no !collapse/!cartoon annotations", file=sys.stderr)
         return 1
     print("[PASS] exported Nexus contains the expected style annotations")
 
@@ -253,8 +259,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         for fmt, width, height in _RENDER_FORMATS:
             try:
                 result = TOOLS["render_tree"](
-                    ctx, nexus_file=nexus, format=fmt,
-                    width=width, height=height,
+                    ctx,
+                    nexus_file=nexus,
+                    format=fmt,
+                    width=width,
+                    height=height,
                 )
             except ToolError as exc:
                 _print_error(f"render {fmt}", exc)
@@ -266,8 +275,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 )
                 return 1
             if not result.get("ok"):
-                print(f"[FAIL] render {fmt}: {result.get('error_key')}",
-                      file=sys.stderr)
+                print(f"[FAIL] render {fmt}: {result.get('error_key')}", file=sys.stderr)
                 print(
                     "  hint: rerun with --style-only if rendering is not "
                     "available in this environment.",
@@ -277,8 +285,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             image = result.get("image", {})
             path = image.get("absolute")
             if not path or not Path(path).is_file():
-                print(f"[FAIL] render {fmt}: output file missing",
-                      file=sys.stderr)
+                print(f"[FAIL] render {fmt}: output file missing", file=sys.stderr)
                 return 1
             rendered.append((fmt, path))
             dimensions = ""

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -193,9 +192,12 @@ class TestRunStorage:
         png = run.run_dir / "out.png"
         # 1x1 red PNG (smallest valid file)
         import base64
-        png.write_bytes(base64.b64decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=="
-        ))
+
+        png.write_bytes(
+            base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=="
+            )
+        )
         entry = run.register(png)
         assert entry["data_uri"].startswith("data:image/png;base64,")
         assert entry["mime"] == "image/png"

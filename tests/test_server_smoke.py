@@ -22,20 +22,34 @@ import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from conftest import GTDB_DIR, SMALL_TREE  # noqa: E402
+from conftest import SMALL_TREE  # noqa: E402
 from figtreekit_mcp._version import __version__
 
 PY = sys.executable
 
 # The 21 tool names (T01..T21).
 EXPECTED_TOOLS = {
-    "get_environment", "check_figtree", "setup_figtree",
-    "validate_tree", "summarize_tree", "cross_validate",
-    "check_monophyly", "analyze_taxonomy", "taxonomy_completeness",
-    "style_tree", "apply_config", "export_nexus",
-    "highlight_clade", "color_clade", "set_clade_font",
-    "collapse_clade", "collapse_group", "collapse_rank", "clear_annotations",
-    "render_tree", "run_figtreekit_cli",
+    "get_environment",
+    "check_figtree",
+    "setup_figtree",
+    "validate_tree",
+    "summarize_tree",
+    "cross_validate",
+    "check_monophyly",
+    "analyze_taxonomy",
+    "taxonomy_completeness",
+    "style_tree",
+    "apply_config",
+    "export_nexus",
+    "highlight_clade",
+    "color_clade",
+    "set_clade_font",
+    "collapse_clade",
+    "collapse_group",
+    "collapse_rank",
+    "clear_annotations",
+    "render_tree",
+    "run_figtreekit_cli",
 }
 
 EXPECTED_RESOURCES = {"figtreekit://version", "figtreekit://help", "figtreekit://defaults"}
@@ -47,9 +61,13 @@ EXPECTED_PROMPTS = {"create-publication-figure", "taxonomy-audit"}
 # --------------------------------------------------------------------------- #
 def _server_params(tmp_path: Path, read_roots: Optional[List[str]] = None) -> StdioServerParameters:
     argv = [
-        PY, "-m", "figtreekit_mcp",
-        "--transport", "stdio",
-        "--workspace-root", str(tmp_path / "ws"),
+        PY,
+        "-m",
+        "figtreekit_mcp",
+        "--transport",
+        "stdio",
+        "--workspace-root",
+        str(tmp_path / "ws"),
     ]
     for r in read_roots or []:
         argv += ["--allow-read-root", str(r)]
@@ -112,7 +130,8 @@ class TestHandshakeAndListing:
                     {"tree_file": "example.tree", "render_formats": "SVG"},
                 )
                 pub_text = "\n".join(
-                    m.content.text for m in pub.messages
+                    m.content.text
+                    for m in pub.messages
                     if getattr(m.content, "type", None) == "text"
                 )
                 assert "example.tree" in pub_text
@@ -121,7 +140,8 @@ class TestHandshakeAndListing:
 
                 audit = await s.get_prompt("taxonomy-audit", {"rank": "class"})
                 audit_text = "\n".join(
-                    m.content.text for m in audit.messages
+                    m.content.text
+                    for m in audit.messages
                     if getattr(m.content, "type", None) == "text"
                 )
                 assert "class" in audit_text
@@ -152,9 +172,12 @@ class TestTypicalCalls:
                 await s.initialize()
                 res = await s.call_tool(
                     "style_tree",
-                    {"tree_content": SMALL_TREE, "layout": "polar",
-                     "polar_angular_range_degrees": 180,
-                     "polar_root_angle_degrees": 270},
+                    {
+                        "tree_content": SMALL_TREE,
+                        "layout": "polar",
+                        "polar_angular_range_degrees": 180,
+                        "polar_root_angle_degrees": 270,
+                    },
                 )
                 assert res.isError is False
                 data = _json_text(res)
@@ -170,24 +193,36 @@ class TestTypicalCalls:
             async with ClientSession(r, w) as s:
                 await s.initialize()
                 # materialise a styled nexus first
-                styled = await s.call_tool("style_tree", {"tree_content": SMALL_TREE, "layout": "polar"})
+                styled = await s.call_tool(
+                    "style_tree", {"tree_content": SMALL_TREE, "layout": "polar"}
+                )
                 data = _json_text(styled)
                 nexus = data["nexus_file"]["absolute"]
                 res = await s.call_tool(
-                    "render_tree", {"nexus_file": nexus, "format": "PNG",
-                                    "width": 200, "height": 150, "timeout": 60}
+                    "render_tree",
+                    {
+                        "nexus_file": nexus,
+                        "format": "PNG",
+                        "width": 200,
+                        "height": 150,
+                        "timeout": 60,
+                    },
                 )
                 if res.isError:  # pragma: no cover - defensive (protocol error)
-                    combined = "\n".join(c.text for c in res.content
-                                         if getattr(c, "type", None) == "text")
-                    assert ("java" in combined.lower() or "jar" in combined.lower())
+                    combined = "\n".join(
+                        c.text for c in res.content if getattr(c, "type", None) == "text"
+                    )
+                    assert "java" in combined.lower() or "jar" in combined.lower()
                 else:
                     rdata = _json_text(res)
                     if rdata.get("ok") is False:
                         # Java/JAR absent: the unified envelope must say why.
                         assert rdata["code"] in (
-                            "java_missing", "jar_missing", "render_failed",
-                            "render_timeout", "render_bad_format",
+                            "java_missing",
+                            "jar_missing",
+                            "render_failed",
+                            "render_timeout",
+                            "render_bad_format",
                         )
                         assert rdata["error"]
                     else:
@@ -220,9 +255,7 @@ class TestErrorEnvelope:
         async with stdio_client(_server_params(tmp_path)) as (r, w):
             async with ClientSession(r, w) as s:
                 await s.initialize()
-                res = await s.call_tool(
-                    "validate_tree", {"tree_content": "((A:-1,B:1):1,C:2);"}
-                )
+                res = await s.call_tool("validate_tree", {"tree_content": "((A:-1,B:1):1,C:2);"})
                 env = _json_text(res)
                 assert env["ok"] is False
                 assert env["code"] == "validation_failed"
@@ -241,14 +274,23 @@ class TestCancellation:
         async with stdio_client(_server_params(tmp_path)) as (r, w):
             async with ClientSession(r, w) as s:
                 await s.initialize()
-                styled = await s.call_tool("style_tree", {"tree_content": SMALL_TREE, "layout": "polar"})
+                styled = await s.call_tool(
+                    "style_tree", {"tree_content": SMALL_TREE, "layout": "polar"}
+                )
                 nexus = _json_text(styled)["nexus_file"]["absolute"]
 
                 # Launch render (may be slow without Java; use generous timeout)
                 task = asyncio.create_task(
-                    s.call_tool("render_tree",
-                                {"nexus_file": nexus, "format": "PNG",
-                                 "width": 800, "height": 600, "timeout": 120})
+                    s.call_tool(
+                        "render_tree",
+                        {
+                            "nexus_file": nexus,
+                            "format": "PNG",
+                            "width": 800,
+                            "height": 600,
+                            "timeout": 120,
+                        },
+                    )
                 )
                 await asyncio.sleep(0.05)
                 task.cancel()
@@ -344,8 +386,9 @@ class TestThreadedRegistration:
         from figtreekit_mcp.server import _threaded_tool
 
         def boom(ctx: Any) -> Dict[str, Any]:
-            raise ToolError("access_denied", "拒绝", error_key="k",
-                            details=[{"level": "ERROR", "message": "m"}])
+            raise ToolError(
+                "access_denied", "拒绝", error_key="k", details=[{"level": "ERROR", "message": "m"}]
+            )
 
         env = asyncio.run(_threaded_tool(boom)(ctx=object()))
         assert env["ok"] is False
@@ -356,6 +399,7 @@ class TestThreadedRegistration:
         from figtreekit_mcp.server import _threaded_tool
 
         for exc_type in (KeyboardInterrupt, SystemExit):
+
             def boom(ctx: Any, _exc=exc_type) -> Dict[str, Any]:
                 raise _exc()
 
@@ -397,12 +441,14 @@ class TestThreadedRegistration:
         from figtreekit_mcp.server import create_server, get_active_app
 
         workspace = tmp_path / "ws"
-        server = create_server({
-            "workspace_root": str(workspace),
-            "cli_timeout": 7,
-            "render_timeout": 8,
-            "setup_timeout": 9,
-        })
+        server = create_server(
+            {
+                "workspace_root": str(workspace),
+                "cli_timeout": 7,
+                "render_timeout": 8,
+                "setup_timeout": 9,
+            }
+        )
         app = get_active_app()
         assert app is not None
         assert Path(app.workspace_root) == workspace.resolve()

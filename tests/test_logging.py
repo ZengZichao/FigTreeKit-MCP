@@ -13,7 +13,6 @@ from __future__ import annotations
 import io
 import logging
 import re
-from typing import TextIO
 
 import pytest
 
@@ -31,7 +30,9 @@ def _clean_logger() -> None:
     lg.setLevel(logging.NOTSET)
 
 
-def _capture(*, verbose: int = 0, quiet: bool = False) -> tuple[logging.Logger, io.StringIO, io.StringIO]:
+def _capture(
+    *, verbose: int = 0, quiet: bool = False
+) -> tuple[logging.Logger, io.StringIO, io.StringIO]:
     err, out = io.StringIO(), io.StringIO()
     logger = setup_logger(name=_NAME, verbose=verbose, quiet=quiet, stream=err)
     # A stdout-side handler must never exist for this logger.
@@ -92,8 +93,7 @@ class TestISOFormat:
 
     def test_formatter_direct(self) -> None:
         fm = _ISOTimeFormatter("%(asctime)s")
-        rec = logging.LogRecord(_NAME, logging.INFO, __file__, 1,
-                                "m", (), None)
+        rec = logging.LogRecord(_NAME, logging.INFO, __file__, 1, "m", (), None)
         rec.created = 1_700_000_000.123456
         assert fm.formatTime(rec) == "2023-11-14T22:13:20.123Z"
 

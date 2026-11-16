@@ -20,23 +20,54 @@ from figtreekit_mcp.params import ParamSpec
 # --------------------------------------------------------------------------- #
 # 1. ParamSpec.validate() only raises ToolError, never a bare exception
 # --------------------------------------------------------------------------- #
-@given(st.dictionaries(keys=st.sampled_from([
-    "layout", "rooting_type", "transform", "order", "tip_labels",
-    "node_labels", "branch_labels", "scale_bar", "scale_axis", "legend",
-    "legend_position", "collapse_style", "multi_tree",
-    "background_color", "foreground_color", "selection_color", "label_color",
-    "tip_label_font_style", "tip_label_font_size", "branch_width", "zoom",
-    "expansion", "root_age", "scale_factor", "polar_angular_range_degrees",
-    "polar_root_angle_degrees", "radial_spread", "curvature", "root_length",
-    "scale_axis_font_size", "scale_axis_significant_digits", "run_name",
-]), values=st.one_of(
-    st.none(),
-    st.text(),
-    st.integers(),
-    st.floats(allow_nan=True, allow_infinity=True),
-    st.booleans(),
-    st.lists(st.text()),
-)))
+@given(
+    st.dictionaries(
+        keys=st.sampled_from(
+            [
+                "layout",
+                "rooting_type",
+                "transform",
+                "order",
+                "tip_labels",
+                "node_labels",
+                "branch_labels",
+                "scale_bar",
+                "scale_axis",
+                "legend",
+                "legend_position",
+                "collapse_style",
+                "multi_tree",
+                "background_color",
+                "foreground_color",
+                "selection_color",
+                "label_color",
+                "tip_label_font_style",
+                "tip_label_font_size",
+                "branch_width",
+                "zoom",
+                "expansion",
+                "root_age",
+                "scale_factor",
+                "polar_angular_range_degrees",
+                "polar_root_angle_degrees",
+                "radial_spread",
+                "curvature",
+                "root_length",
+                "scale_axis_font_size",
+                "scale_axis_significant_digits",
+                "run_name",
+            ]
+        ),
+        values=st.one_of(
+            st.none(),
+            st.text(),
+            st.integers(),
+            st.floats(allow_nan=True, allow_infinity=True),
+            st.booleans(),
+            st.lists(st.text()),
+        ),
+    )
+)
 def test_param_spec_validate_only_raises_tool_error(kwargs: Dict[str, Any]) -> None:
     try:
         ParamSpec(**kwargs).validate()
@@ -48,17 +79,14 @@ def test_param_spec_validate_only_raises_tool_error(kwargs: Dict[str, Any]) -> N
         ) from exc
 
 
-@given(st.text(alphabet=st.characters(blacklist_categories=("Cs",)),
-               max_size=64))
+@given(st.text(alphabet=st.characters(blacklist_categories=("Cs",)), max_size=64))
 def test_run_name_validation_only_tool_error(run_name: str) -> None:
     try:
         ParamSpec(run_name=run_name).validate()
     except ToolError:
         pass
     except Exception as exc:  # pragma: no cover
-        raise AssertionError(
-            f"run_name raised bare {type(exc).__name__}: {exc!r}"
-        ) from exc
+        raise AssertionError(f"run_name raised bare {type(exc).__name__}: {exc!r}") from exc
 
 
 # --------------------------------------------------------------------------- #
@@ -71,36 +99,40 @@ def test_colour_never_crashes(value: str) -> None:
     except ToolError:
         pass
     except Exception as exc:  # pragma: no cover
-        raise AssertionError(
-            f"background_color raised bare {type(exc).__name__}: {exc!r}"
-        ) from exc
+        raise AssertionError(f"background_color raised bare {type(exc).__name__}: {exc!r}") from exc
 
 
 # --------------------------------------------------------------------------- #
 # 3. operations: adversarial op lists must never crash the validator
 # --------------------------------------------------------------------------- #
-@given(st.lists(st.dictionaries(
-    keys=st.text(max_size=16),
-    values=st.one_of(st.text(), st.integers(), st.booleans(), st.lists(st.text())),
-    max_size=4,
-), max_size=4))
+@given(
+    st.lists(
+        st.dictionaries(
+            keys=st.text(max_size=16),
+            values=st.one_of(st.text(), st.integers(), st.booleans(), st.lists(st.text())),
+            max_size=4,
+        ),
+        max_size=4,
+    )
+)
 def test_operations_never_crash(operations: List[Dict[str, Any]]) -> None:
     try:
         ParamSpec(operations=operations).validate()
     except ToolError:
         pass
     except Exception as exc:  # pragma: no cover
-        raise AssertionError(
-            f"operations raised bare {type(exc).__name__}: {exc!r}"
-        ) from exc
+        raise AssertionError(f"operations raised bare {type(exc).__name__}: {exc!r}") from exc
 
 
 # --------------------------------------------------------------------------- #
 # 4. additional_config: arbitrary config dicts must not crash to_cli_args
 # --------------------------------------------------------------------------- #
-@given(st.dictionaries(st.text(max_size=16),
-                       st.one_of(st.text(), st.integers(), st.floats(allow_nan=True),
-                                 st.booleans())))
+@given(
+    st.dictionaries(
+        st.text(max_size=16),
+        st.one_of(st.text(), st.integers(), st.floats(allow_nan=True), st.booleans()),
+    )
+)
 def test_additional_config_to_cli_args_never_crashes(cfg: Dict[str, Any]) -> None:
     try:
         spec = ParamSpec(additional_config=cfg)

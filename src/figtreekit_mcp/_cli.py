@@ -46,40 +46,90 @@ def create_cli_parser() -> argparse.ArgumentParser:
             "and render phylogenetic trees for AI assistants."
         ),
     )
-    parser.add_argument("--transport", choices=["stdio", "sse", "http"],
-                        default="stdio", help="MCP transport (default: stdio)")
-    parser.add_argument("--host", default="127.0.0.1",
-                        help="Bind host for sse/http (default: 127.0.0.1, loopback only)")
-    parser.add_argument("--port", type=_positive_int, default=8777,
-                        help="Bind port for sse/http (default: 8777)")
-    parser.add_argument("--allow-remote-bind", action="store_true",
-                        help="Allow non-loopback binds (policy: Studio resolve_bind_host)")
-    parser.add_argument("--workspace-root", type=str, default=None,
-                        help="Writable workspace root (default: ./figtreekit-mcp-workspace)")
-    parser.add_argument("--allow-read-root", action="append", default=[],
-                        metavar="DIR", help="Read-only whitelist root (repeatable)")
-    parser.add_argument("--jar", default=None, metavar="PATH",
-                        help="Explicit figtree_patched.jar path")
-    parser.add_argument("--content-max-bytes", type=_positive_int, default=10 * 1024 * 1024,
-                        help="Max tree_content bytes (default: 10485760)")
-    parser.add_argument("--file-max-bytes", type=_positive_int, default=200 * 1024 * 1024,
-                        help="Max whitelisted file bytes (default: 209715200)")
-    parser.add_argument("--cli-timeout", type=_positive_int, default=300,
-                        help="Pass-through CLI timeout in seconds (default: 300)")
-    parser.add_argument("--render-timeout", type=_positive_int, default=180,
-                        help="Render JVM timeout in seconds (default: 180)")
-    parser.add_argument("--setup-timeout", type=_positive_int, default=600,
-                        help="FigTree setup timeout in seconds (default: 600)")
-    parser.add_argument("--keep-runs", type=_non_negative_int, default=50,
-                        help="Run directories to keep (default: 50)")
-    parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="Increase log verbosity (-v INFO, -vv DEBUG)")
+    parser.add_argument(
+        "--transport",
+        choices=["stdio", "sse", "http"],
+        default="stdio",
+        help="MCP transport (default: stdio)",
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Bind host for sse/http (default: 127.0.0.1, loopback only)",
+    )
+    parser.add_argument(
+        "--port", type=_positive_int, default=8777, help="Bind port for sse/http (default: 8777)"
+    )
+    parser.add_argument(
+        "--allow-remote-bind",
+        action="store_true",
+        help="Allow non-loopback binds (policy: Studio resolve_bind_host)",
+    )
+    parser.add_argument(
+        "--workspace-root",
+        type=str,
+        default=None,
+        help="Writable workspace root (default: ./figtreekit-mcp-workspace)",
+    )
+    parser.add_argument(
+        "--allow-read-root",
+        action="append",
+        default=[],
+        metavar="DIR",
+        help="Read-only whitelist root (repeatable)",
+    )
+    parser.add_argument(
+        "--jar", default=None, metavar="PATH", help="Explicit figtree_patched.jar path"
+    )
+    parser.add_argument(
+        "--content-max-bytes",
+        type=_positive_int,
+        default=10 * 1024 * 1024,
+        help="Max tree_content bytes (default: 10485760)",
+    )
+    parser.add_argument(
+        "--file-max-bytes",
+        type=_positive_int,
+        default=200 * 1024 * 1024,
+        help="Max whitelisted file bytes (default: 209715200)",
+    )
+    parser.add_argument(
+        "--cli-timeout",
+        type=_positive_int,
+        default=300,
+        help="Pass-through CLI timeout in seconds (default: 300)",
+    )
+    parser.add_argument(
+        "--render-timeout",
+        type=_positive_int,
+        default=180,
+        help="Render JVM timeout in seconds (default: 180)",
+    )
+    parser.add_argument(
+        "--setup-timeout",
+        type=_positive_int,
+        default=600,
+        help="FigTree setup timeout in seconds (default: 600)",
+    )
+    parser.add_argument(
+        "--keep-runs",
+        type=_non_negative_int,
+        default=50,
+        help="Run directories to keep (default: 50)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase log verbosity (-v INFO, -vv DEBUG)",
+    )
     parser.add_argument("-q", "--quiet", action="store_true", help="ERROR-level logs only")
     parser.add_argument("--log-file", default=None, help="Append logs to a file")
-    parser.add_argument("--self-test", action="store_true",
-                        help="Run self-diagnostics and exit (0/1)")
-    parser.add_argument("--version", action="version",
-                        version=f"figtreekit-mcp {__version__}")
+    parser.add_argument(
+        "--self-test", action="store_true", help="Run self-diagnostics and exit (0/1)"
+    )
+    parser.add_argument("--version", action="version", version=f"figtreekit-mcp {__version__}")
     return parser
 
 
@@ -183,20 +233,37 @@ def run_self_test(mcp: Any) -> int:
     # 2. tool registry
     from .tools import TOOLS
 
-    from mcp.server.fastmcp import FastMCP as _FM
-
     expected = {
-        "get_environment", "check_figtree", "setup_figtree",
-        "validate_tree", "summarize_tree", "cross_validate",
-        "check_monophyly", "analyze_taxonomy", "taxonomy_completeness",
-        "style_tree", "apply_config", "export_nexus",
-        "highlight_clade", "color_clade", "set_clade_font",
-        "collapse_clade", "collapse_group", "collapse_rank", "clear_annotations",
-        "render_tree", "run_figtreekit_cli",
+        "get_environment",
+        "check_figtree",
+        "setup_figtree",
+        "validate_tree",
+        "summarize_tree",
+        "cross_validate",
+        "check_monophyly",
+        "analyze_taxonomy",
+        "taxonomy_completeness",
+        "style_tree",
+        "apply_config",
+        "export_nexus",
+        "highlight_clade",
+        "color_clade",
+        "set_clade_font",
+        "collapse_clade",
+        "collapse_group",
+        "collapse_rank",
+        "clear_annotations",
+        "render_tree",
+        "run_figtreekit_cli",
     }
     missing = expected - set(TOOLS)
-    checks.append(("工具注册（恰 21 个）", len(TOOLS) == 21 and not missing,
-                   f"missing={sorted(missing)} count={len(TOOLS)}"))
+    checks.append(
+        (
+            "工具注册（恰 21 个）",
+            len(TOOLS) == 21 and not missing,
+            f"missing={sorted(missing)} count={len(TOOLS)}",
+        )
+    )
 
     # 3. protocol-frame purity (static)
     src_dir = Path(__file__).resolve().parent
@@ -257,8 +324,11 @@ def _self_test_roundtrip(app: Any) -> tuple:
     ctx = _FakeCtx(app)
     small = "(((A:1,B:1):1,C:2):1,(D:3,E:3):1);"
     res = TOOLS["style_tree"](
-        ctx, tree_content=small, layout="polar",
-        polar_angular_range_degrees=180, polar_root_angle_degrees=270,
+        ctx,
+        tree_content=small,
+        layout="polar",
+        polar_angular_range_degrees=180,
+        polar_root_angle_degrees=270,
         operations=[{"op": "highlight", "taxa": ["A", "B"], "color": "#FF0000"}],
     )
     if not res.get("ok"):
@@ -278,9 +348,14 @@ def _self_test_render(app: Any) -> tuple:
     if not res.get("ok"):
         return False, f"style_tree: {res}"
     timeout = app.effective_render_timeout(120) if app is not None else 120
-    render = TOOLS["render_tree"](ctx, nexus_file=res["nexus_file"]["absolute"],
-                                  format="PNG", width=400, height=300,
-                                  timeout=timeout)
+    render = TOOLS["render_tree"](
+        ctx,
+        nexus_file=res["nexus_file"]["absolute"],
+        format="PNG",
+        width=400,
+        height=300,
+        timeout=timeout,
+    )
     if not render.get("ok"):
         _log.info("render skipped: %s", render.get("error"))
         return True, "[WARN] 渲染未完成: " + str(render.get("error"))[:120]
@@ -352,8 +427,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         except Exception as exc:  # noqa: BLE001 - self-test must never hang
             env = envelope_from_exception(exc)
             print(
-                f"[FAIL] self-test 初始化失败: {env.get('code')} "
-                f"{env.get('error')}",
+                f"[FAIL] self-test 初始化失败: {env.get('code')} {env.get('error')}",
                 file=sys.stderr,
             )
             return 1

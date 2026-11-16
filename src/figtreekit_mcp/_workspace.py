@@ -31,7 +31,10 @@ from ._logging import get_logger
 
 _RUN_NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")  # full artifact filename
 _WINDOWS_RESERVED = {
-    "CON", "PRN", "AUX", "NUL",
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
     *(f"COM{i}" for i in range(1, 10)),
     *(f"LPT{i}" for i in range(1, 10)),
 }
@@ -225,12 +228,7 @@ class RunStorage:
         }
 
         mime = _IMAGE_MIME.get(path.suffix.lower())
-        if (
-            with_data_uri
-            and mime
-            and path.exists()
-            and path.stat().st_size <= _DATA_URI_MAX_BYTES
-        ):
+        if with_data_uri and mime and path.exists() and path.stat().st_size <= _DATA_URI_MAX_BYTES:
             data = path.read_bytes()
             entry["data_uri"] = f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
             entry["mime"] = mime
@@ -322,6 +320,7 @@ class Workspace:
         Returns the number of removed directories.
         """
         keep = self.keep_runs if keep_runs is None else keep_runs
+
         def _mtime(p: Path) -> float:
             try:
                 return p.stat().st_mtime

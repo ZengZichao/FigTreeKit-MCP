@@ -50,8 +50,14 @@ def build_figtreekit_command(
             fresh run directory, so overwrite semantics are safe).
         python: Interpreter path; defaults to ``python``.
     """
-    cmd = [quote_arg(python or "python"), "-m", module, quote_arg(input_path),
-           "-o", quote_arg(output_path)]
+    cmd = [
+        quote_arg(python or "python"),
+        "-m",
+        module,
+        quote_arg(input_path),
+        "-o",
+        quote_arg(output_path),
+    ]
     if force:
         cmd.append("--force")
     cmd += [quote_arg(a) for a in args_list]
@@ -70,10 +76,15 @@ def build_java_render_command(
 ) -> str:
     """Build ``java -jar <jar> -graphic FMT -width W -height H <in> <out>``."""
     parts = [
-        quote_arg(java), "-jar", quote_arg(jar_path),
-        "-graphic", str(fmt).upper(),
-        "-width", str(width),
-        "-height", str(height),
+        quote_arg(java),
+        "-jar",
+        quote_arg(jar_path),
+        "-graphic",
+        str(fmt).upper(),
+        "-width",
+        str(width),
+        "-height",
+        str(height),
         quote_arg(nexus_path),
         quote_arg(output_path),
     ]

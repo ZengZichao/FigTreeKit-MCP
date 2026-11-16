@@ -182,7 +182,9 @@ def data_read_roots() -> List[str]:
 # --------------------------------------------------------------------------- #
 # App / context fixtures
 # --------------------------------------------------------------------------- #
-def _build_app(tmp_path: Path, extra_read_roots: Optional[List[str]] = None, **overrides: Any) -> Any:
+def _build_app(
+    tmp_path: Path, extra_read_roots: Optional[List[str]] = None, **overrides: Any
+) -> Any:
     cfg: Dict[str, Any] = {
         "workspace_root": str(tmp_path / "ws"),
         "read_roots": [str(tmp_path / "reads")],

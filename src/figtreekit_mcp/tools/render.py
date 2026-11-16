@@ -21,7 +21,7 @@ from .._core import resolve_tree_source
 from .._errors import ToolError, ok_envelope
 from .._logging import get_logger
 from .. import cli_command
-from . import TOOLS, get_app, progress, require_run, tool
+from . import get_app, progress, require_run, tool
 from .environment import probe_jar, probe_java
 
 _log = get_logger()
@@ -162,11 +162,14 @@ def render_tree(
         # The input file was validated above, so a missing file here means the
         # JAR vanished between probe and render (or an unexpected IO error).
         msg = str(exc)
-        if ("input" not in msg.lower()
-                and "tree file" not in msg.lower()
-                and not Path(jar_path).is_file()):
-            raise ToolError("jar_missing", f"figtree_patched.jar 缺失：{exc}",
-                            error_key="jar_missing") from exc
+        if (
+            "input" not in msg.lower()
+            and "tree file" not in msg.lower()
+            and not Path(jar_path).is_file()
+        ):
+            raise ToolError(
+                "jar_missing", f"figtree_patched.jar 缺失：{exc}", error_key="jar_missing"
+            ) from exc
         raise ToolError(
             "render_failed",
             f"渲染输入文件不可读：{exc}",
@@ -201,11 +204,13 @@ def render_tree(
     post_processed = [c for c in (background_color, foreground_color, label_color) if c]
     warnings = []
     if post_processed:
-        warnings.append({
-            "level": "WARNING",
-            "message": "cli_command 无法复现 background/foreground/label 颜色的 "
-                       "Python 后处理，仅复现布局、尺寸与渲染格式。",
-        })
+        warnings.append(
+            {
+                "level": "WARNING",
+                "message": "cli_command 无法复现 background/foreground/label 颜色的 "
+                "Python 后处理，仅复现布局、尺寸与渲染格式。",
+            }
+        )
 
     return ok_envelope(
         image=artifact,
@@ -237,15 +242,23 @@ def _build_render_command(
     image.  Colour post-processing done by Python is not representable.
     """
     parts = [
-        cli_command.quote_arg("python"), "-m", "figtreekit",
+        cli_command.quote_arg("python"),
+        "-m",
+        "figtreekit",
         cli_command.quote_arg(input_path),
-        "-o", cli_command.quote_arg(str(nexus_out)),
+        "-o",
+        cli_command.quote_arg(str(nexus_out)),
         "--force",
-        "--render", cli_command.quote_arg(str(out_path)),
-        "--render-format", fmt,
-        "--render-width", str(width),
-        "--render-height", str(height),
-        "--figtree-jar", cli_command.quote_arg(jar_path),
+        "--render",
+        cli_command.quote_arg(str(out_path)),
+        "--render-format",
+        fmt,
+        "--render-width",
+        str(width),
+        "--render-height",
+        str(height),
+        "--figtree-jar",
+        cli_command.quote_arg(jar_path),
     ]
     return " ".join(parts)
 

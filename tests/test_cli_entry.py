@@ -13,7 +13,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -57,9 +56,18 @@ class TestParser:
         assert args.allow_read_root == ["/a", "/b"]
 
     def test_timeouts_and_limits(self) -> None:
-        args = _parse("--cli-timeout", "10", "--render-timeout", "20",
-                      "--content-max-bytes", "1024", "--file-max-bytes", "2048",
-                      "--keep-runs", "3")
+        args = _parse(
+            "--cli-timeout",
+            "10",
+            "--render-timeout",
+            "20",
+            "--content-max-bytes",
+            "1024",
+            "--file-max-bytes",
+            "2048",
+            "--keep-runs",
+            "3",
+        )
         assert args.cli_timeout == 10
         assert args.render_timeout == 20
         assert args.content_max_bytes == 1024
@@ -111,11 +119,20 @@ class TestConfigFromArgs:
         assert cfg["render_timeout"] == 180
 
     def test_explicit_config(self) -> None:
-        cfg = _config_from_args(_parse(
-            "--workspace-root", "/ws", "--allow-read-root", "/r",
-            "--jar", "/j.jar", "--keep-runs", "2",
-            "--cli-timeout", "10",
-        ))
+        cfg = _config_from_args(
+            _parse(
+                "--workspace-root",
+                "/ws",
+                "--allow-read-root",
+                "/r",
+                "--jar",
+                "/j.jar",
+                "--keep-runs",
+                "2",
+                "--cli-timeout",
+                "10",
+            )
+        )
         assert cfg["workspace_root"] == "/ws"
         assert cfg["read_roots"] == ["/r"]
         assert cfg["jar"] == "/j.jar"
@@ -169,11 +186,13 @@ class TestMain:
         from figtreekit_mcp.tools import environment
 
         monkeypatch.setattr(
-            environment, "probe_java",
+            environment,
+            "probe_java",
             lambda: {"ok": False, "version": "", "message": "java missing", "hints": []},
         )
         monkeypatch.setattr(
-            environment, "probe_jar",
+            environment,
+            "probe_jar",
             lambda app, jar_path=None: {"ok": False, "path": None, "hints": []},
         )
         rc = main(["--self-test", "--workspace-root", str(tmp_path / "ws")])
@@ -190,9 +209,18 @@ class TestMain:
             env = os.environ.copy()
             env["PYTHONPATH"] = str(src) + os.pathsep + env.get("PYTHONPATH", "")
             proc = subprocess.run(
-                [sys.executable, "-m", "figtreekit_mcp", "--self-test",
-                 "--workspace-root", str(workspace)],
-                capture_output=True, text=True, timeout=240, env=env,
+                [
+                    sys.executable,
+                    "-m",
+                    "figtreekit_mcp",
+                    "--self-test",
+                    "--workspace-root",
+                    str(workspace),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=240,
+                env=env,
             )
             assert proc.returncode == 0, f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
             assert "ALL PASS" in proc.stdout

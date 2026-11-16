@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import shlex
 
-from figtreekit_mcp import cli_command
 from figtreekit_mcp.cli_command import (
     bash_repr,
     build_figtreekit_command,
@@ -43,9 +42,7 @@ class TestQuoteArg:
 class TestBuildCommands:
     def test_figtreekit_command_shape(self) -> None:
         cmd = build_figtreekit_command("/in/tree.tre", "/out/o.nex", ["--layout", "polar"])
-        assert cmd == (
-            "python -m figtreekit /in/tree.tre -o /out/o.nex --force --layout polar"
-        )
+        assert cmd == ("python -m figtreekit /in/tree.tre -o /out/o.nex --force --layout polar")
 
     def test_figtreekit_command_quotes_hex(self) -> None:
         cmd = build_figtreekit_command("i.tre", "o.nex", ["--background-color", "#FAFAFA"])
@@ -57,15 +54,15 @@ class TestBuildCommands:
         assert "--force" not in cmd
 
     def test_custom_python_and_module(self) -> None:
-        cmd = build_figtreekit_command("i.tre", "o.nex", [], python="/opt/py/bin/python",
-                                       module="figtreekit")
+        cmd = build_figtreekit_command(
+            "i.tre", "o.nex", [], python="/opt/py/bin/python", module="figtreekit"
+        )
         assert cmd.startswith("/opt/py/bin/python -m figtreekit")
 
     def test_java_render_command(self) -> None:
         cmd = build_java_render_command("/a/o.nex", "/b/o.png", "PNG", 2400, 1600, "/j/fig.jar")
         parts = shlex.split(cmd)
-        assert parts[:6] == ["java", "-jar", "/j/fig.jar", "-graphic", "PNG",
-                             "-width"]
+        assert parts[:6] == ["java", "-jar", "/j/fig.jar", "-graphic", "PNG", "-width"]
         assert "2400" in parts and "1600" in parts
         assert parts[-2:] == ["/a/o.nex", "/b/o.png"]
 
@@ -80,20 +77,31 @@ class TestBuildCommands:
 class TestRoundTrip:
     def test_shlex_round_trip_reconstructs_argv(self) -> None:
         args_list = [
-            "--layout", "polar",
-            "--background-color", "#FAFAFA",
-            "--taxonomy-levels", "d:domain,p:phylum",
-            "--set", "scaleAxis.fontSize=14",
-            "--highlight", "A,B:#FF0000:3",
-            "--collapse-taxa", "C,label=Clade1,type=cartoon",
+            "--layout",
+            "polar",
+            "--background-color",
+            "#FAFAFA",
+            "--taxonomy-levels",
+            "d:domain,p:phylum",
+            "--set",
+            "scaleAxis.fontSize=14",
+            "--highlight",
+            "A,B:#FF0000:3",
+            "--collapse-taxa",
+            "C,label=Clade1,type=cartoon",
         ]
-        cmd = build_figtreekit_command(
-            "/path with space/in tree.tre", "/out/o.nex", args_list
-        )
+        cmd = build_figtreekit_command("/path with space/in tree.tre", "/out/o.nex", args_list)
         reparsed = split_for_check(cmd)
-        expected = ["python", "-m", "figtreekit",
-                    "/path with space/in tree.tre", "-o", "/out/o.nex", "--force",
-                    *args_list]
+        expected = [
+            "python",
+            "-m",
+            "figtreekit",
+            "/path with space/in tree.tre",
+            "-o",
+            "/out/o.nex",
+            "--force",
+            *args_list,
+        ]
         assert reparsed == expected
 
     def test_java_command_round_trip(self) -> None:

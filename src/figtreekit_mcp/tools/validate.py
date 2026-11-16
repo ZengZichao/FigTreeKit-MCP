@@ -19,7 +19,7 @@ from mcp.server.fastmcp import Context
 from .._core import StyleResult, make_styler, resolve_tree_source
 from .._errors import ToolError, ok_envelope
 from .._logging import get_logger
-from . import TOOLS, get_app, require_run, resolve_mapping_file, tool
+from . import get_app, require_run, resolve_mapping_file, tool
 
 _log = get_logger()
 
@@ -132,8 +132,14 @@ def validate_tree(
             error_key="unsupported_format",
         )
 
-    report = _report_for(content, fmt, label=tree_file or "content", run=run,
-                         mol_type=mol_type, skip_length_check=skip_length_check)
+    report = _report_for(
+        content,
+        fmt,
+        label=tree_file or "content",
+        run=run,
+        mol_type=mol_type,
+        skip_length_check=skip_length_check,
+    )
 
     errors = report.pop("_errors", [])
     warnings = report.pop("_warnings", [])
@@ -169,12 +175,14 @@ def _report_for(
 
     if fmt == "newick":
         dv = figtreekit.deep_validate_newick(content, label=label)
-        report.update({
-            "format": "newick",
-            "leaf_count": dv["leaf_count"],
-            "node_count": dv["node_count"],
-            "tree_count": content.count(";") or 1,
-        })
+        report.update(
+            {
+                "format": "newick",
+                "leaf_count": dv["leaf_count"],
+                "node_count": dv["node_count"],
+                "tree_count": content.count(";") or 1,
+            }
+        )
         report["_errors"] = list(dv["errors"])
         report["_warnings"] = list(dv["warnings"])
         return report
@@ -198,12 +206,14 @@ def _report_for(
             warns.append(
                 f"nexus: 树间末端数量不一致 {sorted(leaf_counts)} — 请确认是否代表同一组末端"
             )
-        report.update({
-            "format": "nexus",
-            "leaf_count": summaries[0]["leaf_count"] if summaries else 0,
-            "node_count": max(0, 2 * (summaries[0]["leaf_count"] if summaries else 0) - 1),
-            "tree_count": tree_count,
-        })
+        report.update(
+            {
+                "format": "nexus",
+                "leaf_count": summaries[0]["leaf_count"] if summaries else 0,
+                "node_count": max(0, 2 * (summaries[0]["leaf_count"] if summaries else 0) - 1),
+                "tree_count": tree_count,
+            }
+        )
         report["_errors"] = errs
         report["_warnings"] = warns
         return report
@@ -216,23 +226,25 @@ def _report_for(
             dv = figtreekit.deep_validate_fasta(
                 str(tmp), expected_alphabet=mol_type, check_alignment=not skip_length_check
             )
-            report.update({
-                "format": "fasta",
-                "sequence_count": dv["sequence_count"],
-                "alphabet": dv["alphabet"],
-                "duplicate_ids": dv["duplicate_ids"],
-                "length_mismatch": dv["length_mismatch"],
-            })
-        else:
-            dv = figtreekit.deep_validate_fastq(
-                str(tmp), expected_alphabet=mol_type
+            report.update(
+                {
+                    "format": "fasta",
+                    "sequence_count": dv["sequence_count"],
+                    "alphabet": dv["alphabet"],
+                    "duplicate_ids": dv["duplicate_ids"],
+                    "length_mismatch": dv["length_mismatch"],
+                }
             )
-            report.update({
-                "format": "fastq",
-                "sequence_count": dv["read_count"],
-                "alphabet": dv["alphabet"],
-                "duplicate_ids": dv["duplicate_ids"],
-            })
+        else:
+            dv = figtreekit.deep_validate_fastq(str(tmp), expected_alphabet=mol_type)
+            report.update(
+                {
+                    "format": "fastq",
+                    "sequence_count": dv["read_count"],
+                    "alphabet": dv["alphabet"],
+                    "duplicate_ids": dv["duplicate_ids"],
+                }
+            )
     finally:
         tmp.unlink(missing_ok=True)
 
@@ -301,9 +313,7 @@ def summarize_tree(
         "selected_tree": sr.selected_index,
         "statistics": stats,
         "tip_labels_total": total,
-        "tip_labels_preview": (
-            tips["labels"][:tip_labels_limit] if include_tip_labels else []
-        ),
+        "tip_labels_preview": (tips["labels"][:tip_labels_limit] if include_tip_labels else []),
         "translate_block": tips["translate"],
         "warnings": sr.warnings,
     }
@@ -367,9 +377,7 @@ def cross_validate(
             error_detail=str(exc),
         ) from exc
 
-    result = figtreekit.cross_validate_tree_sequence(
-        labels, seq_ids, label=Path(seq_path).name
-    )
+    result = figtreekit.cross_validate_tree_sequence(labels, seq_ids, label=Path(seq_path).name)
     errors: List[str] = result.get("errors", [])
     if strict and errors:
         raise ToolError(

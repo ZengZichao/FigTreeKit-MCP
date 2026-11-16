@@ -21,7 +21,7 @@ import sys
 import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional, get_type_hints
+from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Optional, get_type_hints
 
 # Eager preload of the heavy optional import BEFORE ``FastMCP.run`` starts the
 # event loop.  ``figtreekit.load_content`` imports ``Bio.Phylo`` (which pulls
@@ -188,7 +188,8 @@ def _threaded_tool(
         try:
             return await anyio.to_thread.run_sync(_invoke, abandon_on_cancel=True)
         except Exception as exc:  # noqa: BLE001 - handlers raise ToolError
-            return envelope_from_exception(exc, run_dir=get_run_dir(ctx))
+            run_dir = get_run_dir(ctx) if ctx is not None else None
+            return envelope_from_exception(exc, run_dir=run_dir)
 
     # FastMCP derives the tool schema/docstring from the wrapper.  Copy the
     # *evaluated* signature and hints, otherwise string annotations from
@@ -228,7 +229,7 @@ def _register_tools(mcp: FastMCP) -> None:
 
 
 @asynccontextmanager
-async def _lifespan(server: FastMCP):
+async def _lifespan(server: FastMCP) -> AsyncIterator[Any]:
     app = get_active_app()
     yield app
     if app is not None:

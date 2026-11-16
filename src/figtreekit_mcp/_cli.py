@@ -21,7 +21,7 @@ from ._errors import ToolError, envelope_from_exception
 from ._logging import setup_logger
 from ._version import __version__
 
-_log = None  # configured in main()
+_log: Any = None  # configured in main()
 
 
 def _positive_int(value: str) -> int:

@@ -535,7 +535,7 @@ def collapse_group(
                     "taxa_count": str(len(resolved)),
                 }
             )
-            spec = {"op": "collapse_group", "group": grp}
+            spec: Dict[str, Any] = {"op": "collapse_group", "group": grp}
             if label:
                 spec["label"] = label
             if style != "collapse":
@@ -649,7 +649,7 @@ def collapse_rank(
         records_total.append(
             {"op": "warnings", "status": "info", "reason": "；".join(warn_msgs)[:500]}
         )
-    extra = {
+    extra: Dict[str, Any] = {
         "collapsed_groups": sum(1 for r in records if r["status"] == "applied"),
         "skipped_groups": sum(1 for r in records if r["status"] == "skipped"),
     }

@@ -35,5 +35,8 @@ jobs:
           ruff check .
           ruff format --check .
 
+      - name: Type check (mypy)
+        run: mypy src
+
       - name: Test (pytest)
         run: python -m pytest -q -m "not slow"

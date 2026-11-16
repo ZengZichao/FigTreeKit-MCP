@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
 TOOLS: Dict[str, Callable[..., Dict[str, Any]]] = {}
 
 
-def tool(name: str):
+def tool(name: str) -> Callable[..., Any]:
     """Register a handler under its MCP tool name."""
 
     def deco(fn: Callable[..., Dict[str, Any]]) -> Callable[..., Dict[str, Any]]:
@@ -111,7 +111,7 @@ def _notify(ctx: Any, method_name: str, *args: Any) -> None:
     try:
         from anyio.from_thread import run as run_on_loop
     except Exception:  # pragma: no cover - anyio is a hard MCP dependency
-        run_on_loop = None
+        run_on_loop = None  # type: ignore[assignment]
     if run_on_loop is not None:
         try:
             run_on_loop(method, *args)

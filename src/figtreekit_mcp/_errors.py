@@ -22,7 +22,7 @@ codes lives in :data:`EXCEPTION_TO_CODE`.
 from __future__ import annotations
 
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from figtreekit import exceptions as fk_exc
 
@@ -100,7 +100,7 @@ EXCEPTION_TO_CODE: List[tuple] = [
 ]
 
 
-def _code_for_exc(exc: Exception) -> str:
+def _code_for_exc(exc: BaseException) -> str:
     for exc_type, code in EXCEPTION_TO_CODE:
         if isinstance(exc, exc_type):
             return code
@@ -211,7 +211,7 @@ def _friendly_message(code: str, exc: BaseException) -> str:
     return table.get(code, f"错误（{code}）：{exc}")
 
 
-def collect_warnings(warnings_list) -> List[Dict[str, str]]:
+def collect_warnings(warnings_list: List[Any]) -> List[Dict[str, str]]:
     """Normalise figtreekit compatibility warnings into envelope ``details``."""
     messages = []
     for w in warnings_list:
@@ -224,14 +224,14 @@ def collect_warnings(warnings_list) -> List[Dict[str, str]]:
     return [{"level": "WARNING", "message": m} for m in messages]
 
 
-def guard(fn):
+def guard(fn: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator: wrap a handler so every exception becomes an error envelope.
 
     The envelope is *returned* (``ok: false``) rather than raised, so the MCP
     layer receives structured JSON and the process never crashes.
     """
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         run_dir: Optional[str] = None
         try:
             return fn(*args, **kwargs)

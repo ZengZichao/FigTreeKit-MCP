@@ -106,6 +106,7 @@ def resolve_tree_source(
             format=detect_format(tree_content),
         )
 
+    assert tree_file is not None  # 上面的互斥检查已保证此处非空
     path = workspace.assert_readable(tree_file)
     workspace.check_file_size(path)
     try:
@@ -504,7 +505,7 @@ def collapse_monophyletic_groups(
     step (``figtreekit._cli`` Step 3) so the collapsed triangle inherits the
     palette.
     """
-    records: List[Dict[str, str]] = []
+    records: List[Dict[str, Any]] = []
     for group_name, entry in result.get("monophyletic", {}).items():
         # CLI parity: figtreekit --collapse-rank attempts collapse_by_group on
         # EVERY monophyletic group, including single-taxon groups (collapse_by_group

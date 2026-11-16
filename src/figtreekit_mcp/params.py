@@ -673,8 +673,9 @@ class ParamSpec:
             color_all_emitted = True
         for op in operations:
             op_name = op.get("op")
-            taxa_list = op.get("taxa") if isinstance(op.get("taxa"), list) else []
-            taxa = ",".join(str(t) for t in taxa_list)
+            raw_taxa = op.get("taxa")
+            taxa_list = [str(t) for t in raw_taxa] if isinstance(raw_taxa, list) else []
+            taxa = ",".join(taxa_list)
             if op_name == "highlight":
                 spec = taxa
                 color = op.get("color")
@@ -803,7 +804,7 @@ class ParamSpec:
             "rectilinear": "rectilinearLayout.alignTipLabels",
             "polar": "polarLayout.alignTipLabels",
             "radial": "radialLayout.alignTipLabels",
-        }.get(self.layout or "rectilinear")
+        }.get(self.layout or "rectilinear", "rectilinearLayout.alignTipLabels")
         if self.align_tip_labels is not None:
             cfg[layout_key] = bool(self.align_tip_labels)
 

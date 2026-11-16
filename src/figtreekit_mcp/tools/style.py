@@ -213,7 +213,7 @@ def apply_operations(
     """Execute ordered clade operations, returning per-op records."""
     records: List[Dict[str, str]] = []
     for i, op in enumerate(operations):
-        name = op.get("op")
+        name = str(op.get("op", ""))
         try:
             if name == "highlight":
                 styler.highlight_clade(

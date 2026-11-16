@@ -84,6 +84,13 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 ignore_missing_imports = true
 
+# figtreekit 内核未附带类型标注，跟随其导入会产生大量第三方类型噪音；
+# 这里将其视为 Any，仅对本仓库代码做类型检查。
+[[tool.mypy.overrides]]
+module = ["figtreekit", "figtreekit.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

@@ -254,7 +254,7 @@ def analyze_taxonomy(
     ]
     summary = result.get("summary", {})
 
-    def _groups(d: Dict[str, Any]) -> List[Dict[str, str]]:
+    def _groups(d: Dict[str, Any]) -> List[Dict[str, Any]]:
         out = []
         for g, info in sorted(d.items(), key=lambda kv: (-len(kv[1].get("taxa", [])), kv[0])):
             count = len(info.get("taxa", []))

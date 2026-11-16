@@ -28,6 +28,8 @@ Typical usage::
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from typing import Any
+
 from ._version import __version__
 
 __author__ = "Zeng Zichao"
@@ -37,7 +39,7 @@ __license__ = "GPL-2.0-or-later"
 __all__ = ["__version__", "create_server", "main"]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Expose ``create_server``/``main`` lazily to keep package import light."""
     if name == "create_server":
         from .server import create_server

@@ -355,6 +355,12 @@ def cross_validate(
             error_key="missing_sequences_file",
         )
     seq_path = resolve_mapping_file(app, sequences_file)
+    if seq_path is None:
+        raise ToolError(
+            "invalid_argument",
+            "sequences_file 无法解析为可读路径",
+            error_key="missing_sequences_file",
+        )
     content, _node = resolve_tree_source(tree_content, tree_file, app.workspace)
     sr = make_styler(content, multi_tree="first")
 

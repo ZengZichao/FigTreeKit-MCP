@@ -17,7 +17,7 @@
   与盘符相对路径、零 shell 列表执行、输出强制重定向到 `run_<uuid8>`。
 - **三种传输**：stdio（默认）、SSE、Streamable HTTP。
 - **并发**：同步 handler 在 AnyIO 工作线程中运行，全局 `RLock` 串行化 CLI/JAR 执行。
-- **测试**：19 个测试文件，覆盖单元、工具层集成、E2E 协议、SEC-1..12 安全、
+- **测试**：20 个测试文件，覆盖单元、工具层集成、E2E 协议、SEC-1..12 安全、
   hypothesis 属性、并发与工作区加固。
 - **工具脚本**：`tools/equivalence_probe.py`、`tools/ref_test_gen.py`、
   `tools/gtdb_acceptance.py`、`tools/mcp_debug_client.py`。
